@@ -1,0 +1,8 @@
+--Check if MRP process is running 
+select process, status, sequence# from v$managed_standby;
+
+--Check the location that Primary is shipping to
+col dest_name for a22
+col status for a22
+select dest_name, status, destination from v$archived_dest;
+

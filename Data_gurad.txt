@@ -17,8 +17,9 @@ Alter database recover managed standby database using current logfile dissconnec
 Alter database recover managed standby database cancel;
 
 
+--Check Primary last log
+SELECT MAX(SEQUENCE#),THREAD# FROM V$ARCHIVED_LOG WHERE RESETLOGS_CHANGE# = (SELECT MAX(RESETLOGS_CHANGE#) FROM V$ARCHIVED_LOG) GROUP BY THREAD#;
 
-
-
-
-
+--Check Primary last log
+col destination for a16
+SELECT DESTINATION, STATUS, ARCHIVED_THREAD#, ARCHIVED_SEQ# FROM V$ARCHIVE_DEST_STATUS WHERE STATUS <> 'DEFERRED' AND STATUS <> 'INACTIVE';

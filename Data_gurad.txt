@@ -7,11 +7,11 @@ col status for a22
 select dest_name, status, destination from v$archived_dest;
 
 
---Start SQL appy 
+--Start SQL appy Physical database
 Alter database recover managed standby database disconnect from session;
 
---Start realtime SQL appy
-Alter database recover managed standby database using current logfile disconnect from session;
+--Start realtime SQL appy for logical standby;
+Alter database start logical standby apply immediate;
 
 --Stop SQL apply
 Alter database recover managed standby database cancel;

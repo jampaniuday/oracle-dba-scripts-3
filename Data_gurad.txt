@@ -28,10 +28,10 @@ SELECT DESTINATION, STATUS, ARCHIVED_THREAD#, ARCHIVED_SEQ# FROM V$ARCHIVE_DEST_
 --Check for Gap on Standby
 SELECT *  FROM V$ARCHIVE_GAP;
 
---On Primary
+--On Primary compare this queries results with the output from below query
 Select max(sequence#) from v$archived_log;
 
---On Standby
+--On Standby compare this queries results with the output from above query
 Select max(sequence#) from v$archived_log where applied ='YES';
 
 

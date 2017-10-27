@@ -11,7 +11,7 @@ select dest_name, status, destination from v$archived_dest;
 Alter database recover managed standby database disconnect from session;
 
 --Start realtime SQL appy
-Alter database recover managed standby database using current logfile dissconnect from session;
+Alter database recover managed standby database using current logfile disconnect from session;
 
 --Stop SQL apply
 Alter database recover managed standby database cancel;

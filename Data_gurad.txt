@@ -23,3 +23,19 @@ SELECT MAX(SEQUENCE#),THREAD# FROM V$ARCHIVED_LOG WHERE RESETLOGS_CHANGE# = (SEL
 --Check Primary last log
 col destination for a16
 SELECT DESTINATION, STATUS, ARCHIVED_THREAD#, ARCHIVED_SEQ# FROM V$ARCHIVE_DEST_STATUS WHERE STATUS <> 'DEFERRED' AND STATUS <> 'INACTIVE';
+
+
+--Check for Gap on Standby
+SELECT *  FROM V$ARCHIVE_GAP;
+
+--On Primary
+Select max(sequence#) from v$archived_log;
+
+--On Standby
+Select max(sequence#) from v$archived_log where applied ='YES';
+
+
+
+
+
+

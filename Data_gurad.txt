@@ -1,8 +1,24 @@
---Check if MRP process is running 
+--Check if MRP process is running on standby
 select process, status, sequence# from v$managed_standby;
 
 --Check the location that Primary is shipping to
 col dest_name for a22
 col status for a22
 select dest_name, status, destination from v$archived_dest;
+
+
+--Start SQL appy 
+Alter database recover managed standby database disconnect from session;
+
+--Start realtime SQL appy
+Alter database recover managed standby database using current logfile dissconnect from session;
+
+--Stop SQL apply
+Alter database recover managed standby database cancel;
+
+
+
+
+
+
 

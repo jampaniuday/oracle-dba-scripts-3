@@ -34,6 +34,8 @@ Select max(sequence#) from v$archived_log;
 --On Standby compare this queries results with the output from above query
 Select max(sequence#) from v$archived_log where applied ='YES';
 
+X$LOGBUF_READHIST
+
 
 
 

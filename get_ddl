@@ -1,0 +1,18 @@
+
+
+set long 32009
+select dbms_metadata.get_ddl(
+object_type => 'TABLE', 
+name        =>'EMPLOYEE', -
+schema      => 'TEST') 
+as table_def from dual;
+
+select dbms_metadata.get_ddl(
+'INDEX',
+'DEPT_IDX',
+'SCOTT') 
+from dual;
+
+
+
+

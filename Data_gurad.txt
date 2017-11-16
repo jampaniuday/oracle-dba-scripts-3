@@ -36,7 +36,43 @@ Select max(sequence#) from v$archived_log where applied ='YES';
 
 X$LOGBUF_READHIST
 
---SELECT PROCESS, CLIENT_PROCESS,THREAD#, SEQUENCE#,STATUS FROM V$MANAGED_STANDBY;
+--On standby
+SELECT PROCESS, CLIENT_PROCESS,THREAD#, SEQUENCE#,STATUS FROM V$MANAGED_STANDBY;
+
+-- On primary This indirectly shows how much
+-- redo data (at the current point in time) could be lost if the primary database crashed
+SELECT * FROM V$DATAGUARD_STATS;
+
+--On standby This view provides the current redo apply rate in KB/second:
+select to_char(snapshot_time,'dd-mon-rr hh24:mi:ss') snapshot_time, thread#, sequence#, applied_scn,
+apply_rate from V$standby_apply_snapshot;
+
+
+
+
+
+--On standby This view can be used to monitor efficient recovery operations as
+--well as to estimate the time required to complete the current operation in progress
+select to_char(start_time, 'DD-MON-RR HH24:MI:SS') start_time, item, round(sofar/1024,2) "MB/Sec"
+from v$recovery_progress where (item='Active Apply Rate' or item='Average Apply Rate');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

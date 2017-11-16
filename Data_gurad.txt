@@ -36,7 +36,7 @@ Select max(sequence#) from v$archived_log where applied ='YES';
 
 X$LOGBUF_READHIST
 
-
+--SELECT PROCESS, CLIENT_PROCESS,THREAD#, SEQUENCE#,STATUS FROM V$MANAGED_STANDBY;
 
 
 

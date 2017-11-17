@@ -57,7 +57,8 @@ select to_char(start_time, 'DD-MON-RR HH24:MI:SS') start_time, item, round(sofar
 from v$recovery_progress where (item='Active Apply Rate' or item='Average Apply Rate');
 
 
-
+--on Standby logical to determin lag
+select name, value, unit from v$dataguard_status;
 
 
 

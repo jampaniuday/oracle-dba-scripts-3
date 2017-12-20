@@ -55,7 +55,8 @@ select to_char(snapshot_time,'dd-mon-rr hh24:mi:ss') snapshot_time, thread#, seq
 apply_rate from V$standby_apply_snapshot;
 
 
-
+--On Standby to find gap
+SELECT * FROM V$ARCHIVE_GAP;"
 
 
 --On standby This view can be used to monitor efficient recovery operations as

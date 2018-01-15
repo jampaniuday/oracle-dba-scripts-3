@@ -1,0 +1,11 @@
+--How to check if it is enabled
+SQL> select status from dba_autotask_client where client_name = 'auto space advisor';
+
+-- How to disable the procedure
+BEGIN
+	dbms_auto_task_admin.disable(
+		client_name => 'auto space advisor',
+		operation  => NULL,
+		window_name => NULL);
+END;
+/

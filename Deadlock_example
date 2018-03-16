@@ -1,0 +1,22 @@
+-- session 1
+(using ASM)
+CREATE TABLESPACE JON_TEST_WAIT;
+create user jon identified by jon default tablespace JON_TEST_WAIT;
+grant connect, resource to jon;
+grant create table to jon;
+conn jon/jon;
+CREATE TABLE deadlock_tbl (emp_id NUMBER, last_name VARCHAR2(16));
+conn / as sysdba
+grant insert,update,delete on jon.deadlock_tbl to jon;
+conn jon/jon;
+INSERT INTO deadlock_tbl VALUES (1,'Johnson');
+
+COMMIT;
+
+SELECT * FROM deadlock_tbl;
+UPDATE deadlock_tbl SET last_name = 'Smith' WHERE emp_id = 1;
+--  DO NOT COMMIT --
+-- session 2
+UPDATE deadlock_tbl SET last_name = 'Jones' WHERE emp_id = 1;
+
+

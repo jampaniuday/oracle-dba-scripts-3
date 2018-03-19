@@ -13,7 +13,7 @@ INSERT INTO deadlock_tbl VALUES (1,'Johnson');
 
 COMMIT;
 
-SELECT * FROM deadlock_tbl;
+SELECT * FROM jon.deadlock_tbl;
 UPDATE deadlock_tbl SET last_name = 'Smith' WHERE emp_id = 1;
 --  DO NOT COMMIT --
 -- session 2

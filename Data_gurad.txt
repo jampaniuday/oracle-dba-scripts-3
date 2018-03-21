@@ -65,6 +65,8 @@ select name,DATABASE_ROLE,DATAGUARD_BROKER from v$database;
 NAME      DATABASE_ROLE    DATAGUAR
 --------- ---------------- --------
 TEST01    PRIMARY          ENABLED
+--alter system set dg_broker_start=TRUE;
+--alter system set dg_broker_start=FALSE;
 
 
 --On standby This view can be used to monitor efficient recovery operations as

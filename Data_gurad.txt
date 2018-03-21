@@ -60,6 +60,12 @@ apply_rate from V$standby_apply_snapshot;
 --On Standby to find gap
 SELECT * FROM V$ARCHIVE_GAP;
 
+--On Standby or Production 
+select name,DATABASE_ROLE,DATAGUARD_BROKER from v$database;
+NAME      DATABASE_ROLE    DATAGUAR
+--------- ---------------- --------
+TEST01    PRIMARY          ENABLED
+
 
 --On standby This view can be used to monitor efficient recovery operations as
 --well as to estimate the time required to complete the current operation in progress

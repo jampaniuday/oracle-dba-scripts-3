@@ -9,9 +9,10 @@ SELECT DATABASE_ROLE, DB_UNIQUE_NAME INSTANCE, OPEN_MODE, PROTECTION_MODE, PROTE
 SELECT THREAD#, MAX(SEQUENCE#) AS "LAST_APPLIED_LOG" FROM V$LOG_HISTORY GROUP BY THREAD#;
 
 --Check the location that Primary is shipping to
-col dest_name for a22
+set lines 200
+col dest_name for a44
 col status for a22
-col destination for a77
+col destination for a44
 select dest_name, status, destination from v$archive_dest;
 
 

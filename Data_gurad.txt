@@ -11,6 +11,7 @@ SELECT THREAD#, MAX(SEQUENCE#) AS "LAST_APPLIED_LOG" FROM V$LOG_HISTORY GROUP BY
 --Check the location that Primary is shipping to
 col dest_name for a22
 col status for a22
+col destination for a77
 select dest_name, status, destination from v$archive_dest;
 
 

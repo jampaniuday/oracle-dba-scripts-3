@@ -17,7 +17,7 @@ select dest_name, status, destination from v$archive_dest;
 
 
 --Start SQL appy Physical database
-Alter database recover managed standby database disconnect from session;
+Alter database recover managed standby database disconnect;
 
 --Start realtime SQL appy for logical standby;
 Alter database start logical standby apply immediate;

@@ -80,7 +80,7 @@ select name, value, unit from v$dataguard_status;
 
 
 
-
+select log_mode,flashback_on from v$database; 
 
 
 

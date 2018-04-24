@@ -59,10 +59,7 @@ FROM V$LOG_HISTORY GROUP BY THREAD#)) APPL WHERE ARCH.THREAD# = APPL.THREAD#;
 
 
 --Fast start failover status
-Select fs_failover_status,fs_failover_observer_present
-from v$database; 
-
-
+Select fs_failover_status,fs_failover_observer_present from v$database; 
 
 
 

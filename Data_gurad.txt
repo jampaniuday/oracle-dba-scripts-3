@@ -1,4 +1,5 @@
 --Check if MRP process is running on standby
+set lines 200
 select process, status, sequence# from v$managed_standby;
 
 --Check databaes role, protection level

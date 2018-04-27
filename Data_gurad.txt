@@ -24,9 +24,6 @@ col destination for a44
 select dest_name, status, destination from v$archive_dest;
 
 
-
-
-
 --Check Primary last log
 SELECT MAX(SEQUENCE#),THREAD# FROM V$ARCHIVED_LOG WHERE RESETLOGS_CHANGE# = (SELECT MAX(RESETLOGS_CHANGE#) FROM V$ARCHIVED_LOG) GROUP BY THREAD#;
 
@@ -58,10 +55,8 @@ SELECT ARCH.THREAD# "Thread", ARCH.SEQUENCE# "Last Sequence Received", APPL.SEQU
 FROM V$LOG_HISTORY GROUP BY THREAD#)) APPL WHERE ARCH.THREAD# = APPL.THREAD#;
 
 
-
 --Fast start failover status
 Select fs_failover_status,fs_failover_observer_present from v$database; 
-
 
 
 --On standby
@@ -123,7 +118,7 @@ select * from v$dataguard_status;
 --on Logical Standby to determin lag
 select name, value, unit from v$dataguard_status;
 
-
+edit database test01dg set state='transport-on';
 
 select log_mode,flashback_on from v$database; 
 

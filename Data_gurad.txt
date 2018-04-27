@@ -93,6 +93,11 @@ TEST01    PRIMARY          ENABLED
 select to_char(start_time, 'DD-MON-RR HH24:MI:SS') start_time, item, round(sofar/1024,2) "MB/Sec"
 from v$recovery_progress where (item='Active Apply Rate' or item='Average Apply Rate');
 
+--On Standby to determin status
+set lines 200
+col FACILITY for a18
+col MESSAGE for a110
+select * from v$dataguard_status;
 
 --on Logical Standby to determin lag
 select name, value, unit from v$dataguard_status;

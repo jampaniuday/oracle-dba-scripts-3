@@ -2,6 +2,13 @@
 set lines 200
 select process, status, sequence# from v$managed_standby;
 
+--Start SQL appy Physical database
+Alter database recover managed standby database disconnect;
+-----------------------------------------------------------Start realtime SQL appy for logical standby;
+------------------------------------------------------------Alter database start logical standby apply immediate;
+--Stop SQL apply
+Alter database recover managed standby database cancel;
+
 --Check databaes role, protection level
 set lines 200
 SELECT DATABASE_ROLE, DB_UNIQUE_NAME INSTANCE, OPEN_MODE, PROTECTION_MODE, PROTECTION_LEVEL, SWITCHOVER_STATUS FROM V$DATABASE;
@@ -17,14 +24,7 @@ col destination for a44
 select dest_name, status, destination from v$archive_dest;
 
 
---Start SQL appy Physical database
-Alter database recover managed standby database disconnect;
 
---Start realtime SQL appy for logical standby;
-Alter database start logical standby apply immediate;
-
---Stop SQL apply
-Alter database recover managed standby database cancel;
 
 
 --Check Primary last log

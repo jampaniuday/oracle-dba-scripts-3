@@ -127,7 +127,8 @@ select name, value, unit from v$dataguard_status;
 
 select log_mode,flashback_on from v$database; 
 
-
+alter system set standby_file_management='MANUAL';
+alter system set standby_file_management='AUTO';
 
 
 

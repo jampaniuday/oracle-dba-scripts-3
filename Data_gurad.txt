@@ -87,6 +87,27 @@ TEST01    PRIMARY          ENABLED
 --alter system set dg_broker_start=TRUE;
 --alter system set dg_broker_start=FALSE;
 
+--Database Warning(s):
+    ORA-16857: standby disconnected from redo source for longer than specified threshold
+--check the logs for both standby and primary 
+
+SQL> select GROUP#,THREAD#,BYTES/1024/1024 from v$log;
+    GROUP#    THREAD# BYTES/1024/1024
+---------- ---------- ---------------
+         1          1            1024
+         2          1            1024
+         3          2            1024
+         4          2            1024
+select GROUP#,THREAD# ,BYTES/1024/1024 from v$standby_log;
+    GROUP#    THREAD# BYTES/1024/1024
+---------- ---------- ---------------
+        31          1            1024
+        32          1            1024
+        33          1            1024
+        34          1            1024
+--alter database recover managed standby database cancel;
+--drop 
+
 
 --On standby This view can be used to monitor efficient recovery operations as
 --well as to estimate the time required to complete the current operation in progress

@@ -130,8 +130,8 @@ select log_mode,flashback_on from v$database;
 alter system set standby_file_management='MANUAL';
 alter system set standby_file_management='AUTO';
 
-
-
+-- ON primary
+ALTER SYSTEM SET log_archive_dest_state_2 = DEFER;
 
 
 

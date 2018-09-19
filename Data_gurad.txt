@@ -110,7 +110,7 @@ select to_char(start_time, 'DD-MON-RR HH24:MI:SS') start_time, item, round(sofar
 from v$recovery_progress where (item='Active Apply Rate' or item='Average Apply Rate');
 
 --On Standby to determin status
-set lines 200
+set lines 200 pages 150
 col FACILITY for a18
 col MESSAGE for a110
 select * from v$dataguard_status;

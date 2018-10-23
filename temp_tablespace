@@ -1,0 +1,28 @@
+
+--find size of the temp datafiles
+set lines 200
+col file_name for a100
+col tablespace_name for a16
+select tablespace_name, round(bytes/1024/1024/1024) as GB, INCREMENT_BY,file_name from dba_temp_files;
+
+--find default tablespace name
+SELECT PROPERTY_VALUE
+FROM DATABASE_PROPERTIES
+WHERE PROPERTY_NAME = 'DEFAULT_TEMP_TABLESPACE';
+
+--find total size and free space of the temp tablespaces
+select tablespace_name,
+round(tablespace_size/1024/1024) as TS_size,
+round(allocated_space/1024/1024) as allocated, 
+round(free_space/1024/1024)     as free_space 
+from dba_temp_free_space;
+
+
+--The KEEP clause specifies the minimum size of the tablespace or tempfile. If this is omitted, the database will shrink the tablespace or tempfile to the smallest possible size
+ALTER TABLESPACE temp SHRINK TEMPFILE '/u01/app/oracle/oradata/test/temp01.dbf' KEEP 30M;
+
+ALTER TABLESPACE temp SHRINK SPACE;
+
+alter database tempfile '/u02/app/oracle/oradata/datastore/o1_mf_temp_fgsbnd7t_.tmp' resize 100M;
+
+alter database tempfile '/u02/app/oracle/oradata/datastore/o1_mf_temp_fgsbnd7t_.tmp' autoextend on maxsize unlimited;

@@ -1,0 +1,13 @@
+
+
+
+
+
+
+
+-POINT IN TIME RECOVERY
+run {
+set until time "to_date('2018-10-12:20:50:00', 'yyyy-mm-dd:hh24:mi:ss')";
+restore database skip tablespace 'DATA','TRACKER','TRACKER_INDEX';
+recover database skip tablespace 'DATA','TRACKER','TRACKER_INDEX';
+}

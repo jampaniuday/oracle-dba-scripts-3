@@ -11,3 +11,369 @@ set until time "to_date('2018-10-12:20:50:00', 'yyyy-mm-dd:hh24:mi:ss')";
 restore database skip tablespace 'DATA','TRACKER','TRACKER_INDEX';
 recover database skip tablespace 'DATA','TRACKER','TRACKER_INDEX';
 }
+
+
+
+
+--Restore database to another host using RMAN link at end
+$ rman
+RMAN> connect target /
+connected to target database: ORCL (DBID=123456789123)
+RMAN>
+SQL> select max(next_change#) from v$archived_log where archived = 'YES' group by thread#;
+MAX(NEXT_CHANGE#)
+-----------------
+          1375117
+RMAN> list backup of archivelog all;
+move files to desired server
+scp files* oracle@server:/u01/app/new_location
+
+$ export ORACLE_SID=orcl
+$ rman
+RMAN> connect target /
+connected to target database (not started)
+RMAN>
+RMAN> set dbid 1239150297
+RMAN> startup nomount
+RMAN> show controlfile autobackup format;
+RMAN> set controlfile autobackup format for device type disk to '/u01/app/oracle/oradata/orcl/backup/%F';
+ 
+executing command: SET CONTROLFILE AUTOBACKUP FORMAT
+ 
+RMAN> restore spfile
+2>    to pfile '/u01/app/oracle/oradata/orcl/initorcl.ora'
+3>    from autobackup;
+ 
+Starting restore at 27-APR-10
+allocated channel: ORA_DISK_1
+channel ORA_DISK_1: SID=19 device type=DISK
+ 
+channel ORA_DISK_1: looking for AUTOBACKUP on day: 20100427
+channel ORA_DISK_1: AUTOBACKUP found: /u01/app/oracle/oradata/orcl/backup/c-1239150297-20100427-00
+channel ORA_DISK_1: restoring spfile from AUTOBACKUP /u01/app/oracle/oradata/orcl/backup/c-1239150297-20100427-00
+channel ORA_DISK_1: SPFILE restore from AUTOBACKUP complete
+Finished restore at 27-APR-10
+ 
+RMAN> shutdown abort;
+ 
+Oracle instance shut down
+ 
+RMAN>  
+--Now that we have the SPFILE we need to edit the some of the parameter to reflect the new host’s 
+--file system were appropriate. Below is a list of the some of the parameter you might need to 
+--change in your environment. These directories must exist on the new host.
+
+
+*.audit_file_dest='/u01/app/oracle/admin/orcl/adump'
+*.control_files='/u02/app/oracle/oradata/orcl/ctl/control01.ctl','/u01/app/oracle/flash_recovery_area/orcl/control02.ctl','/u03/app/oracle/oradata/orcl/ctl/control03.ctl'#Restore Controlfile
+*.db_recovery_file_dest_size=4039114752
+*.db_recovery_file_dest='/u01/app/oracle/flash_recovery_area'
+*.diagnostic_dest='/u01/app/oracle'
+*.log_archive_dest_1='LOCATION=/u02/app/oracle/oradata/orcl/arch'
+*.local_listener='LISTENER_ORCL'
+--Note: If you are using 11g you to ensure your kernel parameters are set appropriately to avoid a possible ORA-00845.
+
+[oracle@ora2 orcl]$ oerr ora 00845
+00845, 00000, "MEMORY_TARGET not supported on this system"
+// *Cause: The MEMORY_TARGET parameter was not supported on this operating system or /dev/shm was not sized correctly on Linux.
+// *Action: Refer to documentation for a list of supported operating systems. Or, size /dev/shm to be at least the SGA_MAX_SIZE on each Oracle instance running on the system.
+[oracle@ora2 orcl]$
+After making the necessary changes to the PFILE we now will bring the database back up in NOMOUNT mode so we can restore the control files. When bringing the database up in NOMOUNT mode we will use the PFILE we edited earlier.
+
+RMAN> startup nomount pfile='/u01/app/oracle/oradata/orcl/initorcl.ora';
+ 
+connected to target database (not started)
+ 
+RMAN>
+--Just like the SPFILE we will use the autobackup to restore the control file 
+--after setting the control file autobackup format. After restoring the control files we mount the database.
+
+RMAN> set controlfile autobackup format for device type disk to '/u01/app/oracle/oradata/orcl/backup/%F';
+ 
+RMAN> restore controlfile from autobackup;
+ 
+Starting restore at 27-APR-10...
+...
+Finished restore at 27-APR-10
+ 
+RMAN> alter database mount;
+ 
+database mounted
+released channel: ORA_DISK_1
+ 
+RMAN> 
+--Now that the control files have been restored and mounted, all of the RMAN 
+--configuration parameters have been set. You should verify the paths to make sure they are appropriate for this host.
+
+RMAN> show all;
+ 
+
+
+CONFIGURE CONTROLFILE AUTOBACKUP FORMAT FOR DEVICE TYPE DISK TO '/u03/app/oracle/oradata/orcl/backup/%F';
+CONFIGURE CHANNEL DEVICE TYPE DISK FORMAT   '/u03/app/oracle/oradata/orcl/backup/%U' MAXPIECESIZE 2 G;
+
+ 
+RMAN>
+--Given the current settings RMAN is going to look in /u03/app/oracle/oradata/orcl/backup 
+--for both the control file autobackups and database/archive log backups. The backup we copied 
+--over is located in /u01/app/oracle/oradata/orcl/backup. There are two ways to resolve this issue.
+--Either move the backup to the location were RMAN is configured or change the configuration. It may 
+--be that moving the backups may not be an option so we document what needs to be done next.
+
+--RMAN has record of a backup in /u03/app/oracle/oradata/orcl/backup but has no record of the 
+--backup we have in /u01/app/oracle/oradata/orcl/backup/. We need remove the record of the 
+--old location and the backup of the new location.
+
+In order to let RMAN know about the backup in /u01/app/oracle/oradata/orcl/backup we use the CATALOG command.
+
+RMAN> catalog start with '/u01/app/oracle/oradata/orcl/backup';
+ 
+Starting implicit crosscheck backup at 27-APR-10
+...
+Finished implicit crosscheck backup at 27-APR-10
+ 
+searching for all files in the recovery area
+cataloging files...
+no files cataloged
+ 
+searching for all files that match the pattern /u01/app/oracle/oradata/orcl/backup
+ 
+List of Files Unknown to the Database
+=====================================
+...
+File Name: /u01/app/oracle/oradata/orcl/backup/c-1239150297-20100426-00
+...
+File Name: /u01/app/oracle/oradata/orcl/backup/22lc5nqv_1_1
+ 
+Do you really want to catalog the above files (enter YES or NO)? yes
+cataloging files...
+cataloging done
+ 
+List of Cataloged Files
+=======================
+File Name: /u01/app/oracle/oradata/orcl/backup/20lc5nqr_1_1
+...
+File Name: /u01/app/oracle/oradata/orcl/backup/c-1239150297-20100426-00
+...
+File Name: /u01/app/oracle/oradata/orcl/backup/22lc5nqv_1_1
+ 
+RMAN> 
+--As a result of the CATALOG command RMAN performed a CROSSCHECK. The backup 
+--registered at /u03/app/oracle/oradata/orcl/backup/ was marked expired as a 
+--result of the CROSSCHECK because they were not present.
+
+--We are almost ready to restore the database the last thing to be done is to 
+--build the restore script. During the restore we can change the location of 
+--the data files by using SET NEWNAME FOR DATAFILE. The data files in the backup 
+--are on various locations but we would like to restore them to only one.
+
+--Also we would like to change the location of the redo logs as well. In order 
+--to change the redo log locations the ALTER DATABASE RENAME FILE command has to be 
+--issued. Below are examples of both.
+
+
+SET NEWNAME FOR DATAFILE 1 TO '/u01/app/oracle/oradata/orcl/system01.dbf';
+...
+SET NEWNAME FOR DATAFILE 5 TO '/u01/app/oracle/oradata/orcl/example01.dbf';
+SET NEWNAME FOR DATAFILE 6 TO '/u01/app/oracle/oradata/orcl/test.dbf';
+SET NEWNAME FOR DATAFILE 7 TO '/u01/app/oracle/oradata/orcl/dbfs01.dbf';
+ 
+SQL "ALTER DATABASE RENAME FILE ''/u02/app/oracle/oradata/orcl/redo/redo01.log''
+    TO ''/u01/app/oracle/oradata/orcl/redo/redo01.log'' ";
+...
+    TO ''/u02/app/oracle/oradata/orcl/redo/redo03_b.log'' ";
+SQL "ALTER DATABASE RENAME FILE ''/u02/app/oracle/oradata/orcl/redo/redo04.log''         
+    TO ''/u01/app/oracle/oradata/orcl/redo/redo04.log'' ";
+SQL "ALTER DATABASE RENAME FILE ''/u03/app/oracle/oradata/orcl/redo/redo04_b.log''
+    TO ''/u02/app/oracle/oradata/orcl/redo/redo04_b.log'' ";
+--If you remember we stated that we wanted the restore to stop at SCN 1375117 because 
+--that was the latest SCN in which we have archive logs. In order to stop at a specific 
+--SCN we will use the SET UNTIL SCN 1375117.
+
+--After all of that we just need to restore the database, switch the data files 
+--so the control files have the new path and recover the database. Not much at all. 😉
+
+--Below is the entire script to do just that.
+
+
+RUN {
+  SET NEWNAME FOR DATAFILE 1 TO '/u01/app/oracle/oradata/orcl/system01.dbf';
+  SET NEWNAME FOR DATAFILE 2 TO '/u01/app/oracle/oradata/orcl/sysaux01.dbf';
+  SET NEWNAME FOR DATAFILE 3 TO '/u01/app/oracle/oradata/orcl/undotbs01.dbf';
+  SET NEWNAME FOR DATAFILE 4 TO '/u01/app/oracle/oradata/orcl/users01.dbf';
+  SET NEWNAME FOR DATAFILE 5 TO '/u01/app/oracle/oradata/orcl/example01.dbf';
+  SET NEWNAME FOR DATAFILE 6 TO '/u01/app/oracle/oradata/orcl/test.dbf';
+  SET NEWNAME FOR DATAFILE 7 TO '/u01/app/oracle/oradata/orcl/dbfs01.dbf';
+   
+   
+  SQL "ALTER DATABASE RENAME FILE ''/u02/app/oracle/oradata/orcl/redo/redo01.log''
+      TO ''/u01/app/oracle/oradata/orcl/redo/redo01.log'' ";
+  SQL "ALTER DATABASE RENAME FILE ''/u03/app/oracle/oradata/orcl/redo/red01_b.log''
+      TO ''/u02/app/oracle/oradata/orcl/redo/red01_b.log'' ";
+  SQL "ALTER DATABASE RENAME FILE ''/u02/app/oracle/oradata/orcl/redo/redo02.log''
+      TO ''/u01/app/oracle/oradata/orcl/redo/redo02.log'' ";
+  SQL "ALTER DATABASE RENAME FILE ''/u03/app/oracle/oradata/orcl/redo/redo02_b.log''
+      TO ''/u02/app/oracle/oradata/orcl/redo/redo02_b.log'' ";
+  SQL "ALTER DATABASE RENAME FILE ''/u02/app/oracle/oradata/orcl/redo/redo03.log''         
+      TO ''/u01/app/oracle/oradata/orcl/redo/redo03.log'' "; 
+  SQL "ALTER DATABASE RENAME FILE ''/u03/app/oracle/oradata/orcl/redo/redo03_b.log''
+      TO ''/u02/app/oracle/oradata/orcl/redo/redo03_b.log'' ";
+  SQL "ALTER DATABASE RENAME FILE ''/u02/app/oracle/oradata/orcl/redo/redo04.log''         
+      TO ''/u01/app/oracle/oradata/orcl/redo/redo04.log'' ";
+  SQL "ALTER DATABASE RENAME FILE ''/u03/app/oracle/oradata/orcl/redo/redo04_b.log''
+      TO ''/u02/app/oracle/oradata/orcl/redo/redo04_b.log'' ";
+       
+  SET UNTIL SCN 1375117;
+   
+  RESTORE DATABASE;
+  SWITCH DATAFILE ALL;
+   
+  RECOVER DATABASE;
+}
+--The script above was saved to the file restore.rman. Below is the output.
+RMAN> @restore.rman
+RMAN> RUN {
+2>   SET NEWNAME FOR DATAFILE 1 TO '/u01/app/oracle/oradata/orcl/system01.dbf';
+3>   SET NEWNAME FOR DATAFILE 2 TO '/u01/app/oracle/oradata/orcl/sysaux01.dbf';
+4>   SET NEWNAME FOR DATAFILE 3 TO '/u01/app/oracle/oradata/orcl/undotbs01.dbf';
+5>   SET NEWNAME FOR DATAFILE 4 TO '/u01/app/oracle/oradata/orcl/users01.dbf';
+6>   SET NEWNAME FOR DATAFILE 5 TO '/u01/app/oracle/oradata/orcl/example01.dbf';
+7>   SET NEWNAME FOR DATAFILE 6 TO '/u01/app/oracle/oradata/orcl/test.dbf';
+8>   SET NEWNAME FOR DATAFILE 7 TO '/u01/app/oracle/oradata/orcl/dbfs01.dbf';
+9>   
+10> 
+11>   SQL "ALTER DATABASE RENAME FILE ''/u02/app/oracle/oradata/orcl/redo/redo01.log''
+12>       TO ''/u01/app/oracle/oradata/orcl/redo/redo01.log'' ";
+13>   SQL "ALTER DATABASE RENAME FILE ''/u03/app/oracle/oradata/orcl/redo/red01_b.log''
+14>       TO ''/u02/app/oracle/oradata/orcl/redo/red01_b.log'' ";
+15>   SQL "ALTER DATABASE RENAME FILE ''/u02/app/oracle/oradata/orcl/redo/redo02.log''
+16>       TO ''/u01/app/oracle/oradata/orcl/redo/redo02.log'' ";
+17>   SQL "ALTER DATABASE RENAME FILE ''/u03/app/oracle/oradata/orcl/redo/redo02_b.log''
+18>       TO ''/u02/app/oracle/oradata/orcl/redo/redo02_b.log'' ";
+19>   SQL "ALTER DATABASE RENAME FILE ''/u02/app/oracle/oradata/orcl/redo/redo03.log''         
+20>       TO ''/u01/app/oracle/oradata/orcl/redo/redo03.log'' "; 
+21>   SQL "ALTER DATABASE RENAME FILE ''/u03/app/oracle/oradata/orcl/redo/redo03_b.log''
+22>       TO ''/u02/app/oracle/oradata/orcl/redo/redo03_b.log'' ";
+23>   SQL "ALTER DATABASE RENAME FILE ''/u02/app/oracle/oradata/orcl/redo/redo04.log''         
+24>       TO ''/u01/app/oracle/oradata/orcl/redo/redo04.log'' ";
+25>   SQL "ALTER DATABASE RENAME FILE ''/u03/app/oracle/oradata/orcl/redo/redo04_b.log''
+26>       TO ''/u02/app/oracle/oradata/orcl/redo/redo04_b.log'' ";
+27>       
+28>   SET UNTIL SCN 1375117;
+29>   
+30>   RESTORE DATABASE;
+31>   SWITCH DATAFILE ALL;
+32>   
+33>   RECOVER DATABASE;
+34> }
+executing command: SET NEWNAME
+ 
+executing command: SET NEWNAME
+ 
+executing command: SET NEWNAME
+ 
+executing command: SET NEWNAME
+ 
+executing command: SET NEWNAME
+ 
+executing command: SET NEWNAME
+ 
+executing command: SET NEWNAME
+ 
+using target database control file instead of recovery catalog
+sql statement: ALTER DATABASE RENAME FILE ''/u02/app/oracle/oradata/orcl/redo/redo01.log''      TO ''/u01/app/oracle/oradata/orcl/redo/redo01.log'' 
+ 
+sql statement: ALTER DATABASE RENAME FILE ''/u03/app/oracle/oradata/orcl/redo/red01_b.log''      TO ''/u02/app/oracle/oradata/orcl/redo/red01_b.log'' 
+ 
+sql statement: ALTER DATABASE RENAME FILE ''/u02/app/oracle/oradata/orcl/redo/redo02.log''      TO ''/u01/app/oracle/oradata/orcl/redo/redo02.log'' 
+ 
+sql statement: ALTER DATABASE RENAME FILE ''/u03/app/oracle/oradata/orcl/redo/redo02_b.log''      TO ''/u02/app/oracle/oradata/orcl/redo/redo02_b.log'' 
+ 
+sql statement: ALTER DATABASE RENAME FILE ''/u02/app/oracle/oradata/orcl/redo/redo03.log''               TO ''/u01/app/oracle/oradata/orcl/redo/redo03.log'' 
+ 
+sql statement: ALTER DATABASE RENAME FILE ''/u03/app/oracle/oradata/orcl/redo/redo03_b.log''      TO ''/u02/app/oracle/oradata/orcl/redo/redo03_b.log'' 
+ 
+sql statement: ALTER DATABASE RENAME FILE ''/u02/app/oracle/oradata/orcl/redo/redo04.log''               TO ''/u01/app/oracle/oradata/orcl/redo/redo04.log'' 
+ 
+sql statement: ALTER DATABASE RENAME FILE ''/u03/app/oracle/oradata/orcl/redo/redo04_b.log''      TO ''/u02/app/oracle/oradata/orcl/redo/redo04_b.log'' 
+ 
+executing command: SET until clause
+ 
+Starting restore at 27-APR-10
+allocated channel: ORA_DISK_1
+channel ORA_DISK_1: SID=17 device type=DISK
+allocated channel: ORA_DISK_2
+channel ORA_DISK_2: SID=1 device type=DISK
+ 
+channel ORA_DISK_1: starting datafile backup set restore
+channel ORA_DISK_1: specifying datafile(s) to restore from backup set
+channel ORA_DISK_1: restoring datafile 00003 to /u01/app/oracle/oradata/orcl/undotbs01.dbf
+channel ORA_DISK_1: restoring datafile 00005 to /u01/app/oracle/oradata/orcl/example01.dbf
+channel ORA_DISK_1: restoring datafile 00006 to /u01/app/oracle/oradata/orcl/test.dbf
+channel ORA_DISK_1: reading from backup piece /u01/app/oracle/oradata/orcl/backup/22lc5nqv_1_1
+channel ORA_DISK_2: starting datafile backup set restore
+channel ORA_DISK_2: specifying datafile(s) to restore from backup set
+channel ORA_DISK_2: restoring datafile 00004 to /u01/app/oracle/oradata/orcl/users01.dbf
+channel ORA_DISK_2: reading from backup piece /u01/app/oracle/oradata/orcl/backup/23lc5ns4_1_1
+channel ORA_DISK_2: piece handle=/u01/app/oracle/oradata/orcl/backup/23lc5ns4_1_1 tag=TAG20100427T094358
+channel ORA_DISK_2: restored backup piece 1
+channel ORA_DISK_2: restore complete, elapsed time: 00:00:07
+channel ORA_DISK_2: starting datafile backup set restore
+channel ORA_DISK_2: specifying datafile(s) to restore from backup set
+channel ORA_DISK_2: restoring datafile 00001 to /u01/app/oracle/oradata/orcl/system01.dbf
+channel ORA_DISK_2: restoring datafile 00002 to /u01/app/oracle/oradata/orcl/sysaux01.dbf
+channel ORA_DISK_2: restoring datafile 00007 to /u01/app/oracle/oradata/orcl/dbfs01.dbf
+channel ORA_DISK_2: reading from backup piece /u01/app/oracle/oradata/orcl/backup/21lc5nqv_1_1
+channel ORA_DISK_1: piece handle=/u01/app/oracle/oradata/orcl/backup/22lc5nqv_1_1 tag=TAG20100427T094358
+channel ORA_DISK_1: restored backup piece 1
+channel ORA_DISK_1: restore complete, elapsed time: 00:00:23
+channel ORA_DISK_2: piece handle=/u01/app/oracle/oradata/orcl/backup/21lc5nqv_1_1 tag=TAG20100427T094358
+channel ORA_DISK_2: restored backup piece 1
+channel ORA_DISK_2: restore complete, elapsed time: 00:00:56
+Finished restore at 27-APR-10
+ 
+datafile 1 switched to datafile copy
+input datafile copy RECID=9 STAMP=717436375 file name=/u01/app/oracle/oradata/orcl/system01.dbf
+datafile 2 switched to datafile copy
+input datafile copy RECID=10 STAMP=717436375 file name=/u01/app/oracle/oradata/orcl/sysaux01.dbf
+datafile 3 switched to datafile copy
+input datafile copy RECID=11 STAMP=717436375 file name=/u01/app/oracle/oradata/orcl/undotbs01.dbf
+datafile 4 switched to datafile copy
+input datafile copy RECID=12 STAMP=717436375 file name=/u01/app/oracle/oradata/orcl/users01.dbf
+datafile 5 switched to datafile copy
+input datafile copy RECID=13 STAMP=717436375 file name=/u01/app/oracle/oradata/orcl/example01.dbf
+datafile 6 switched to datafile copy
+input datafile copy RECID=14 STAMP=717436375 file name=/u01/app/oracle/oradata/orcl/test.dbf
+datafile 7 switched to datafile copy
+input datafile copy RECID=15 STAMP=717436375 file name=/u01/app/oracle/oradata/orcl/dbfs01.dbf
+ 
+Starting recover at 27-APR-10
+using channel ORA_DISK_1
+using channel ORA_DISK_2
+ 
+starting media recovery
+ 
+channel ORA_DISK_1: starting archived log restore to default destination
+channel ORA_DISK_1: restoring archived log
+archived log thread=1 sequence=2
+channel ORA_DISK_1: reading from backup piece /u01/app/oracle/oradata/orcl/backup/24lc5o0c_1_1
+channel ORA_DISK_1: piece handle=/u01/app/oracle/oradata/orcl/backup/24lc5o0c_1_1 tag=TAG20100427T094652
+channel ORA_DISK_1: restored backup piece 1
+channel ORA_DISK_1: restore complete, elapsed time: 00:00:01
+archived log file name=/u02/oradata/orcl/arch/1_2_717335393.dbf thread=1 sequence=2
+media recovery complete, elapsed time: 00:00:01
+Finished recover at 27-APR-10
+ 
+RMAN> 
+RMAN> **end-of-file**
+ 
+RMAN> 
+All that is left is to open the database with the RESETLOGS option.
+
+RMAN> alter database open resetlogs;
+ 
+database opened
+Dont' forget to create a temp tablespace also.
+CREATE TEMPORARY TABLESPACE ts_temp TEMPFILE '/data/temp01.dbf' SIZE 500M autoextend on extent management local UNIFORM SIZE 1m;
+
+http://www.oracledistilled.com/oracle-database/restore-database-to-another-host-using-rman/

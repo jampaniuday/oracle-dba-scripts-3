@@ -12,9 +12,9 @@ WHERE PROPERTY_NAME = 'DEFAULT_TEMP_TABLESPACE';
 
 --find total size and free space of the temp tablespaces
 select tablespace_name,
-round(tablespace_size/1024/1024) as TS_size,
-round(allocated_space/1024/1024) as allocated, 
-round(free_space/1024/1024)     as free_space 
+round(tablespace_size/1024/1024/1024) as TS_size,
+round(allocated_space/1024/1024/1024) as allocated, 
+round(free_space/1024/1024/1024)     as free_space 
 from dba_temp_free_space;
 
 

@@ -1,0 +1,26 @@
+
+Must have FRA enabled and be in archivelog mode. If you are not in archivelog mode the you can only create are restore point in mount mode.
+
+col SCN for 99999999999999
+col DATABASE_INCARNATION# for 99999999999999999999
+col GUARANTEE_FLASHBACK_DATABASE for a3
+col STORAGE_SIZE for 999999999999
+col time for a35
+col RESTORE_POINT_TIME for a20
+col NAME for a30
+set pages 220
+alter session set NLS_DATE_FORMAT = 'mm-dd-yyyy HH24:mi:ss';
+select * from v$restore_point;
+/
+           SCN DATABASE_INCARNATION# GUA  STORAGE_SIZE TIME                                RESTORE_POINT_TIME   PRE NAME
+--------------- --------------------- --- ------------- ----------------------------------- -------------------- --- ------------------------------
+     9502786432                     1 NO              0 26-OCT-18 05.34.28.000000000 PM                          NO  PRE_UPGRADE
+
+create restore point <name>;
+create restore point <name> as of {timestamp|SCN} {preserve| guarantee flashback database};
+
+
+DROP RESTORE POINT pre_upgrade;
+
+
+FLASHBACK TABLE employees TO RESTORE POINT good_data;

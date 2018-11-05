@@ -19,6 +19,12 @@ RMAN> LIST CONTROLFILECOPY <key>;
 RMAN> LIST CONTROLFILECOPY 20;
 RMAN> LIST BACKUP OF TABLESPACE USERS;
 RMAN> LIST INCARNATION;
+list expired backup;
+report obsolete;
+# To delete backups that have become obsolete based on the retention policy.
+RMAN>delete obsolete;
+
+
 
 
 

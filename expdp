@@ -1,0 +1,66 @@
+EXPDP username/password@connect_string TABLES=[schema_name.] table_name [:partition_name][,table_name2...] options
+expdp jon/jon@database dumpfile=jon_table.dmp logfile=jon_table.log tables=jon.table ESTIMATE_ONLY=Y
+
+
+set lines 200
+col owner for a8
+col DIRECTORY_NAME for a24
+col DIRECTORY_PATH for a88
+select * from dba_directories
+/
+
+select owner_name,OPERATION,job_mode,job_name,state from dba_datapump_jobs;
+
+
+Options
+  CONTENT    The data to unload: ALL, DATA_ONLY or METADATA_ONLY
+  CLUSTER    Utilize cluster and distribute workers across the Oracle RAC. {Y | N }  
+  COMPRESSION={METADATA_ONLY | NONE}
+  COMPRESSION_ALGORITHM Specify the compression algorithm that should be used. Valid keyword values are: [BASIC], LOW, MEDIUM and HIGH.
+
+  CONTENT={ALL | DATA_ONLY | METADATA_ONLY}
+  DATA_OPTIONS XML_CLOBS
+  DIRECTORY=directory_object
+  DUMPFILE=[directory_object:]file_name [,[directory_object:]file_name...]
+  ESTIMATE={ BLOCKS | STATISTICS}
+  ESTIMATE_ONLY={Y|N}
+  EXCLUDE={object_type [:name_clause]} [,EXCLUDE=...]
+  ENCRYPTION { ALL | DATA_ONLY | METADATA_ONLY }
+  ENCRYPTION_PASSWORD=password
+  ENCRYPTION_ALGORITHM { AES128 | AES192 | AES256 }
+  ENCRYPTION_MODE { DUAL | PASSWORD | TRANSPARENT }
+  FILESIZE=number_of_bytes
+  FLASHBACK_SCN=scn_value
+  FLASHBACK_TIME=timestamp
+  HELP      Display Help messages (N).
+  INCLUDE={object_type [:name_clause]} [,INCLUDE=...]
+  JOB_NAME=jobname_string
+  LOGFILE=[directory_object:]file_name
+  NOLOGFILE={Y|N}
+  NETWORK_LINK=database_link
+  PARALLEL=int
+  PARFILE=[directory_path]file_name        The name of an export parameter file.
+  QUERY=[schema_name.][table_name:]query_clause
+  REMAP_DATA     Specify a data conversion function, e.g. REMAP_DATA=EMP.EMPNO:REMAPPKG.EMPNO
+  REUSE_DUMPFILES      Overwrite destination dump file if it exists (N)
+  SAMPLE=[schema_name.][table_name:]sample_percent
+  SERVICE_NAME  Name of an active Service and associated resource group to constrain Oracle RAC resources.
+  SOURCE_EDITION  Edition to be used for extracting metadata.
+  STATUS [=int]
+  TRANSPORTABLE { ALWAYS | NEVER }
+  TRANSPORT_FULL_CHECK   Verify storage segments of all tables (N).
+  TRANSPORT_TABLESPACES  List of tablespaces from which metadata will be unloaded.
+  USERID=username   The username performing the export, don't confuse with SCHEMAS=schema_name.
+  VERSION={COMPATIBLE | LATEST | version_string}
+  
+  Parfile
+  
+expdp user/password parfile=nameoffile.par
+##content of parfile
+SCHEMAS=GOLD
+DIRECTORY=DEBUG
+COMPRESSION=ALL
+CONTENT=DATA_ONLY
+DUMPFILE=EXP_GOLD_26Jul2017.dmp
+LOGFILE=EXP_GOLD_26Jul2017.log
+INCLUDE=TABLE:"IN(SELECT TNAME FROM GOLD.T11)" 

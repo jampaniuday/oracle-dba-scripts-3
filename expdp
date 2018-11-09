@@ -1,5 +1,5 @@
 EXPDP username/password@connect_string TABLES=[schema_name.] table_name [:partition_name][,table_name2...] options
-expdp jon/jon@database dumpfile=jon_table.dmp logfile=jon_table.log tables=jon.table ESTIMATE_ONLY=Y
+expdp jon/jon@database DIRECTORY=name DUMPFILE=jon_table.dmp LOGFILE=jon_table.log TABLES=jon.table ESTIMATE_ONLY=Y
 
 
 set lines 200

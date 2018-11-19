@@ -17,6 +17,6 @@
 *     03  *  *  *  /home/oracle/nethome/dba/scripts/RSYNC_SCRIPT.sh             > /home/oracle/nethome/dba/logs/RSYNC_SCRIPT.sh          2>&1
 *     06  *  *  *  /home/oracle/nethome/dba/scripts/crontab_check.sh                                                                     2>&1
 #*/15   *  *  *  *  /home/oracle/nethome/dba/scripts/FRA_ENC_script.sh           > /home/oracle/nethome/dba/logs/FRA_ENC_script.sh        2>&1
-10     2  1  *  *  /home/oracle/nethome/dba/scripts/axel_validation_report.sh   >  /dev/null                                             2>&1
+10     2  1  *  *  /home/oracle/nethome/dba/scripts/validation_report.sh   >  /dev/null                                             2>&1
 18     2,6,10,14,18,22 * * * /home/oracle/nethome/dba/scripts/check_standby_archivelog_status.sh > /dev/null                             2>&1
 */5    *  *  *  *  /home/oracle/nethome/dba/scripts/check_longops.sh             > /dev/null                                             2>&1

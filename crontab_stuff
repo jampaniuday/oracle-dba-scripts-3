@@ -1,0 +1,22 @@
+##example of job definition:
+# +----------------------- Minute (0 - 59)
+# |  +-------------------- Hour   (0 - 23)
+# |  |  +----------------- Day of month (1 - 31)
+# |  |  |  +-------------- Month (0 - 12) or jan,feb ...
+# |  |  |  |  +----------- Day of week (0 - 6) (Sunday=0)
+# |  |  |  |  |
+# *  *  *  *  *  /command to be executed
+########################################
+*/30   *  *  *  *  /home/oracle/nethome/dba/scripts/FRA_CHECK.sh                > /home/oracle/nethome/dba/logs/FRA_CHECK.log            2>&1
+*/15   *  *  *  *  /home/oracle/nethome/dba/scripts/ADRCI_ALERTLOG_CHECK.sh     > /home/oracle/nethome/dba/logs/ADRCI_ALERTLOG_CHECK.log 2>&1
+05   */3  *  *  *  /home/oracle/nethome/dba/scripts/LOG_CLEANUP.sh              > /home/oracle/nethome/dba/logs/LOG_CLEANUP.log          2>&1
+*/20   *  *  *  *  /home/oracle/nethome/dba/scripts/DG_SYNC_CHECK.sh            > /home/oracle/nethome/dba/logs/DG_SYNC_CHECK.log        2>&1
+00    05  *  *  1  /home/oracle/nethome/dba/scripts/AWR_rpt.sh                  > /home/oracle/nethome/dba/logs/AWR_rpt.log              2>&1
+00    05  *  *  1  /home/oracle/nethome/dba/scripts/ADDM_rpt.sh                 > /home/oracle/nethome/dba/logs/ADDM_rpt.log             2>&1
+*/12   *  *  *  *  /home/oracle/nethome/dba/scripts/DB_WAIT_CHECK.sh            > /home/oracle/nethome/dba/logs/DB_WAIT_CHECK.log        2>&1
+*     03  *  *  *  /home/oracle/nethome/dba/scripts/RSYNC_SCRIPT.sh             > /home/oracle/nethome/dba/logs/RSYNC_SCRIPT.sh          2>&1
+*     06  *  *  *  /home/oracle/nethome/dba/scripts/crontab_check.sh                                                                     2>&1
+#*/15   *  *  *  *  /home/oracle/nethome/dba/scripts/FRA_ENC_script.sh           > /home/oracle/nethome/dba/logs/FRA_ENC_script.sh        2>&1
+10     2  1  *  *  /home/oracle/nethome/dba/scripts/axel_validation_report.sh   >  /dev/null                                             2>&1
+18     2,6,10,14,18,22 * * * /home/oracle/nethome/dba/scripts/check_standby_archivelog_status.sh > /dev/null                             2>&1
+*/5    *  *  *  *  /home/oracle/nethome/dba/scripts/check_longops.sh             > /dev/null                                             2>&1

@@ -1,0 +1,183 @@
+# .bash_profile
+
+# OS User: oracle
+# Application: Oracle Database Software Owner
+# Version: Oracle 11g Release 2
+# ---------------------------------------------------
+# Get the aliases and functions
+if [ -f ~/.bashrc ]; then
+. ~/.bashrc
+fi
+# ---------------------------------------------------
+
+ORACLE_BASE=/product01/app/oracle
+export ORACLE_BASE
+
+ORACLE_HOME=/product01/app/oracle/product/11.2/dbhome_1
+export ORACLE_HOME
+
+GRID_HOME=/product01/app/11.2.0/grid
+export GRID_HOME
+
+ORACLE_SID=omr
+export ORACLE_SID
+# ---------------------------------------------------
+# NLS_DATE_FORMAT
+# ---------------------------------------------------
+
+NLS_DATE_FORMAT="DD-MON-YYYY HH24:MI:SS"
+export NLS_DATE_FORMAT
+
+# ---------------------------------------------------
+# TNS_ADMIN
+# ---------------------------------------------------
+# Specifies the directory containing the Oracle Net
+# Services configuration files like listener.ora,
+# tnsnames.ora, and sqlnet.ora.
+# ---------------------------------------------------
+
+TNS_ADMIN=$ORACLE_HOME/network/admin
+export TNS_ADMIN
+
+# ---------------------------------------------------
+# PATH
+# ---------------------------------------------------
+# Used by the shell to locate executable programs;
+# must include the $ORACLE_HOME/bin directory.
+# ---------------------------------------------------
+
+
+PATH=$ORACLE_HOME/bin:$PATH:$HOME/nethome/dba/bin:/usr/X11R6/bin
+export PATH
+
+# ---------------------------------------------------
+
+OMS_HOME=/product01/app/oracle/oms12cr5/oms
+AGENT_HOME=/product01/app/oracle/agent12c/core/12.1.0.5.0
+export OMS_HOME
+export AGENT_HOME
+
+
+# ---------------------------------------------------
+[[ $- == *i* ]] &&
+if [ -f /home/oracle/nethome/dba/bin/sid ]; then
+ cnt=`ls /product01/app/oracle/product/*/dbhome_*/dbs/init${ORACLE_SID}.ora /product01/app/oracle/product/*/dbhome_*/dbs/spfile${ORACLE_SID}.ora /product01/app/*/grid/dbs/init${ORACLE_SID}.ora /product01/app/*/grid/dbs/spfile${ORACLE_SID}.ora 2>/dev/null | sed 's/\/dbs\/init\([a-zA-Z0-9.+]*\)$//g' | sed 's/\/dbs\/spfile\([a-zA-Z0-9.+]*\)$//g' | sort -u | wc -l`
+ if [ $cnt -gt 0 ]; then
+  . /home/oracle/nethome/dba/bin/sid
+ fi
+fi
+
+
+
+#add all aliases here...
+alias dba='sqlplus "/ as sysdba"'
+
+
+alias oh='cd $ORACLE_HOME'
+alias udump='cd /product01/app/oracle/admin/${ORACLE_SID}/udump'
+alias bdump='cd /product01/app/oracle/admin/${ORACLE_SID}/bdump'
+alias cdump='cd /product01/app/oracle/admin/${ORACLE_SID}/cdump'
+alias adump='cd /product01/app/oracle/admin/${ORACLE_SID}/adump'
+alias admin='cd /product01/app/oracle/admin/$ORACLE_SID'
+alias dbs='cd $ORACLE_HOME/dbs'
+alias alert='cd /product01/app/oracle/admin/${ORACLE_SID}/bdump'
+alias archive='cd /archivelogs/$(ORACLE_SID)/arch'
+alias product='cd $ORACLE_HOME/rdbms'
+alias util='cd /home/oracle/nethome/dba/sql'
+alias log='cd /home/oracle/nethome/dba/log/rmanauto'
+alias shell='cd /home/oracle/nethome/dba/shell'
+alias status_oms='/product01/app/oracle/oms12cr5/oms/bin/./emctl status oms'
+alias status_agent='/product01/app/oracle/agent12c/core/12.1.0.5.0/bin/./emctl status agent'
+alias start_oms='/product01/app/oracle/oms12cr5/oms/bin/./emctl start oms'
+alias start_agent='/product01/app/oracle/agent12c/core/12.1.0.5.0/bin/./emctl start agent'
+alias sid='env|grep ORACLE_SID'
+#alias alert10g='tail -100 /product01/app/oracle/admin/${ORACLE_SID}/bdump/alert_$ORACLE_SID.log|more'
+
+
+
+cat sid
+#!/bin/bash
+
+if [ $# -ge 1 ]; then
+  export ORACLE_SID=$1
+else
+i=1
+for arg in `ls /product01/app/oracle/product/*/dbhome_*/dbs /product01/app/*/grid/dbs | egrep '^init|^spfile' | grep ora$ | egrep -v 'init.ora|initdw.ora' | sed 's/init//g' | sed 's/spfile//g' | sed 's/.ora//g' | sort -u | LC_COLLATE=C sort -n`
+do
+  echo ${i}. $arg
+  ORACLE_SID_LIST[$i]=$arg
+  (( i = i + 1 ))
+done
+
+  if [ $i -eq 2 ]; then
+    export ORACLE_SID=${ORACLE_SID_LIST[1]}
+  else
+    printf "Choose SID: "
+    read ans
+
+    while [ -z $ans ] || [ ! -z `echo $ans |tr -d 0-9` ] || [ "$ans" -lt 1 ] || [ "$ans" -ge ${i} ]; do
+      printf "Invalid Option.  Choose SID: "
+      read ans
+    done
+    export ORACLE_SID=${ORACLE_SID_LIST[$ans]}
+  fi
+fi
+
+cnt=`ls /product01/app/oracle/product/*/dbhome_*/dbs/init${ORACLE_SID}.ora /product01/app/oracle/product/*/dbhome_*/dbs/spfile${ORACLE_SID}.ora /product01/app/*/grid/dbs/init${ORACLE_SID}.ora /product01/app/*/grid/dbs/spfile${ORACLE_SID}.ora 2>/dev/null | sed 's/\/dbs\/init\([a-zA-Z0-9.+]*\)$//g' | sed 's/\/dbs\/spfile\([a-zA-Z0-9.+]*\)$//g' | sort -u | wc -l`
+if [ $cnt -eq 1 ]; then
+  export ORACLE_HOME=`ls /product01/app/oracle/product/*/dbhome_*/dbs/init${ORACLE_SID}.ora /product01/app/oracle/product/*/dbhome_*/dbs/spfile${ORACLE_SID}.ora /product01/app/*/grid/dbs/init${ORACLE_SID}.ora /product01/app/*/grid/dbs/spfile${ORACLE_SID}.ora 2>/dev/null | sed 's/\/dbs\/init\([a-zA-Z0-9.+]*\)$//g' | sed 's/\/dbs\/spfile\([a-zA-Z0-9.+]*\)$//g' | sort -u`
+else
+  echo
+  echo multiple ORACLE_HOME found for SID $ORACLE_SID
+  i=1
+  for ORA_HOME in `ls /product01/app/oracle/product/*/dbhome_*/dbs/init${ORACLE_SID}.ora /product01/app/oracle/product/*/dbhome_*/dbs/spfile${ORACLE_SID}.ora /product01/app/*/grid/dbs/init${ORACLE_SID}.ora /product01/app/*/grid/dbs/spfile${ORACLE_SID}.ora 2>/dev/null| sed 's/\/dbs\/init\([a-zA-Z0-9.+]*\)$//g' | sed 's/\/dbs\/spfile\([a-zA-Z0-9.+]*\)$//g' | sort -u`
+  do
+    echo $i. $ORA_HOME
+    ORACLE_HOME_LIST[$i]=$ORA_HOME
+    (( i = i + 1 ))
+  done
+  printf "Choose HOME: "
+  read ans
+
+  while [ -z $ans ] || [ ! -z `echo $ans |tr -d 0-9` ] || [ "$ans" -lt 1 ] || [ "$ans" -ge ${i} ]; do
+    printf "Invalid Option.  Choose HOME: "
+    read ans
+  done
+  export ORACLE_HOME=${ORACLE_HOME_LIST[$ans]}
+
+fi
+
+export LIBPATH=$ORACLE_HOME/lib
+export LD_LIBRARY_PATH=$ORACLE_HOME/lib
+#export LD_LIBRARY_PATH=$ORACLE_HOME/lib:`echo $LD_LIBRARY_PATH|awk '
+#BEGIN {RS = ":";arg=0}
+#{if (index($0, "oracle")) { next }}
+#{if (arg == 1) {printf ":"}}
+#{arg=1}
+#{printf $1}' -`
+export PATH=$ORACLE_HOME/bin:$HOME/nethome/dba/bin:$ORACLE_HOME/OPatch:`echo $PATH|awk '
+BEGIN {RS = ":";arg=0}
+{if (index($0, "oracle")) { next }}
+{if (arg == 1) {printf ":"}}
+{arg=1}
+{printf $1}' -`
+export TNS_ADMIN=$ORACLE_HOME/network/admin
+echo
+echo "ORACLE_SID set to ${ORACLE_SID}"
+#echo ORACLE_HOME set to $ORACLE_HOME
+
+
+if [ ! -z `echo $ORACLE_HOME|grep 10` ];then
+  alias udump='cd ${ORACLE_BASE}/admin/${ORACLE_SID}/udump'
+  alias bdump='cd ${ORACLE_BASE}/admin/${ORACLE_SID}/bdump'
+  alias cdump='cd ${ORACLE_BASE}/admin/${ORACLE_SID}/cdump'
+  alias adump='cd ${ORACLE_BASE}/admin/${ORACLE_SID}/adump'
+  alias admin='cd ${ORACLE_BASE}/admin/${ORACLE_SID}'
+else
+  alias udump='cd ${ORACLE_BASE}/diag/rdbms/${ORACLE_SID}/${ORACLE_SID}/trace'
+  alias bdump='cd ${ORACLE_BASE}/diag/rdbms/${ORACLE_SID}/${ORACLE_SID}/trace'
+  alias cdump='cd ${ORACLE_BASE}/diag/rdbms/${ORACLE_SID}/${ORACLE_SID}/cdump'
+  alias adump='cd ${ORACLE_BASE}/admin/${ORACLE_SID}/adump'
+  alias admin='cd ${ORACLE_BASE}/admin/${ORACLE_SID}'
+fi
+

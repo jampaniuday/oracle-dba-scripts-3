@@ -1,0 +1,29 @@
+
+
+JON@test01_1>create table sales ( id number(10),created DATE);
+
+Table created.
+
+JON@test01_1>set serveroutput on
+JON@test01_1>declare i number(10):=1;
+  2  started DATE:=SYSDATE;
+  3  BEGIN
+  4  WHILE i <1000 LOOP
+  5  INSERT INTO sales VALUES (i,SYSDATE);
+  6  i:=i+1;
+  7  IF MOD(i,100) = 0 THEN COMMIT;
+  8  END IF;
+  9  END LOOP;
+ 10  DBMS_OUTPUT.PUT_LINE((SYSDATE - STARTED) *24*60*60);
+ 11  END;
+ 12  /
+0
+
+PL/SQL procedure successfully completed.
+
+JON@test01_1>SELECT COUNT(*) FROM SALES;
+  COUNT(*)
+----------
+       999
+
+1 row selected.

@@ -1,0 +1,38 @@
+--looking for a way to monitor index usage
+--
+--
+set serverout on
+DECLARE
+  sql_stmt VARCHAR2(200);
+BEGIN
+FOR x in (
+select owner,index_name from dba_indexes where owner in ('SYSMAN') 
+and index_name not like '%$$%' 
+and index_name not like '%IOT%' 
+and index_name not like '%MGMT%' 
+and index_name not like '%SYS_%'
+and index_type in ('FUNCTION-BASED NORMAL','BITMAP','NORMAL')
+)
+LOOP
+  sql_stmt := 'alter index '||x.owner||'.'||x.index_name||' monitoring usage';
+  DBMS_OUTPUT.PUT_LINE ( sql_stmt ||';') ;
+  EXECUTE IMMEDIATE sql_stmt;
+END LOOP;
+END;
+/
+
+
+--sample output
+--alter index SYSMAN.XA_IB_SWITCH_IDENTIFIER_IDX1 monitoring usage;
+--alter index SYSMAN.XA_IB_NODE_CONN_IDX1 monitoring usage;
+--alter index SYSMAN.XA_IB_NODE_CONN_IDX2 monitoring usage;
+--alter index SYSMAN.DBPROV_PARAMETERS_PK monitoring usage;
+
+
+--alternate example
+--set pages 999;
+--set heading off;
+--spool run_monitor.sql
+--select 'alter index '||owner||'.'||index_name||' monitoring usage;' from dba_indexes where owner not in ('SYS','SYSTEM','PERFSTAT');
+--spool off;
+--@run_monitor

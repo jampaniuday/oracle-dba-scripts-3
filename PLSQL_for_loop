@@ -21,6 +21,7 @@ END LOOP;
 END;
 /
 
+--https://asktom.oracle.com/pls/apex/f?p=100:11:0::::P11_QUESTION_ID:9534592400346154909
 
 --sample output
 --alter index SYSMAN.XA_IB_SWITCH_IDENTIFIER_IDX1 monitoring usage;
@@ -36,3 +37,9 @@ END;
 --select 'alter index '||owner||'.'||index_name||' monitoring usage;' from dba_indexes where owner not in ('SYS','SYSTEM','PERFSTAT');
 --spool off;
 --@run_monitor
+--selectindex_namemon,usedfrom v$object_usage;
+
+--http://www.dba-oracle.com/t_alter_index_monitoring_command.htm
+
+
+

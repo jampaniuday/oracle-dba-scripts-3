@@ -1,0 +1,23 @@
+
+CREATE TEMPORARY TABLESPACE temp02 TEMPFILE
+'/u01/app/oracle/oradata/uat/temp02.dbf' SIZE 500M
+autoextend off
+extent management local
+UNIFORM SIZE 1m;
+
+ALTER DATABASE TEMPFILE '/u01/app/oracle/oradata/uat/temp01.dbf' RESIZE 005M;
+
+ALTER DATABASE DEFAULT TEMPORARY TABLESPACE temp02;
+
+
+
+VIEW tables:
+DBA_DATA_FILES 
+DBA_TABLESPACES                           
+DBA_TEMP_FILES 
+DBA_TS_QUOTAS                             
+USER_TS_QUOTAS 
+USER_TABLESPACES
+V$TEMPFILE
+V$TEMPORARY_LOBS
+V$TEMPSTAT

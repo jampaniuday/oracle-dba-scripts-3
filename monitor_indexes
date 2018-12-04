@@ -18,3 +18,18 @@ END LOOP;
 END;
 /
 
+
+create view object_usage_hist_vw as
+select u.name owner,
+       io.name index_name,
+       t.name table_name,
+       decode(bitand(i.flags, 65536), 0, 'NO', 'YES') monitoring,
+       decode(bitand(ou.flags, 1), 0, 'NO', 'YES') used,
+       ou.start_monitoring,
+       ou.end_monitoring
+from sys.object_usage ou
+ join sys.obj$ io on io.obj# = ou.obj#
+ join sys.ind$ i on i.obj# = ou.obj#
+ join sys.obj$ t on t.obj# = i.bo#
+ join sys.user$ u on u.user# = io.owner#
+order by 1,2;

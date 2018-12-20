@@ -1,0 +1,57 @@
+SELECT SUM(a.bytes/1024/1024/1024) "UNDO_SIZE"
+  FROM v$datafile a,
+       v$tablespace b,
+       dba_tablespaces c
+ WHERE c.contents = 'UNDO'
+   AND c.status = 'ONLINE'
+   AND b.name = c.tablespace_name
+   AND a.ts# = b.ts#;
+   
+select tablespace_name from dba_tablespaces where tablespace_name like '%UNDO%';
+show parameter undo_tablespace
+select VALUE from v$parameter where NAME='undo_tablespace';
+
+
+ALTER SYSTEM SET UNDO_RETENTION = 2400;
+
+ALTER DATABASE DATAFILE '<undotbs_file_name>' RESIZE 400G ;
+
+--*** to find default UNDO tablespace, Undo size and the undo databata file locaion ***--
+col file_name for a100
+col tablespace_name for a16
+set lines 200
+SELECT tablespace_name, bytes/1024/1024/1024 UNDO_SIZE_MB, SUM(bytes/1024/1024/1024) OVER() TOTAL_UNDO_SIZE_MB, file_name
+FROM dba_data_files d
+WHERE EXISTS (SELECT 1 FROM v$parameter p WHERE LOWER
+(p.name)='undo_tablespace' AND p.value=d.tablespace_name);
+
+ALTER DATABASE DATAFILE '/u02/app/oracle/oradata/datastore/.ACFS/snaps/worm01/WORM01/datafile/o1_mf_undotbs3_f9xzcgh3_.dbf' RESIZE 7G;
+
+
+
+--Undo Advisor
+--Oracle Database provides an Undo Advisor that provides advice on and helps automate the establishment 
+--of your undo environment. You activate the Undo Advisor by creating an undo advisor task through the 
+--advisor framework. The following example creates an undo advisor task to evaluate the undo tablespace. 
+--The name of the advisor is 'Undo Advisor'. The analysis is based on AWR snapshots, which you must 
+--specify by setting parameters START_SNAPSHOT and END_SNAPSHOT.
+
+--In the following example, the START_SNAPSHOT is "1" and END_SNAPSHOT is "2".
+
+DECLARE
+ tid NUMBER;
+ tname VARCHAR2(30);
+ oid NUMBER;
+BEGIN
+ DBMS_ADVISOR.CREATE_TASK('Undo Advisor', tid, tname, 'Undo Advisor Task');
+ DBMS_ADVISOR.CREATE_OBJECT(tname,'UNDO_TBS',null, null, null, 'null', oid);
+ DBMS_ADVISOR.SET_TASK_PARAMETER(tname, 'TARGET_OBJECTS', oid);
+ DBMS_ADVISOR.SET_TASK_PARAMETER(tname, 'START_SNAPSHOT', 1);
+ DBMS_ADVISOR.SET_TASK_PARAMETER(tname, 'END_SNAPSHOT', 2);
+ DBMS_ADVISOR.execute_task(tname);
+end;
+/
+
+--Once you have created the advisor task, you can view the output and recommendations in the 
+--Automatic Database Diagnostic Monitor (ADDM) in Enterprise Manager. This information is also 
+--available in the DBA_ADVISOR_* data dictionary views.

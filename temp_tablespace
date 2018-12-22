@@ -43,3 +43,6 @@ from v$sort_segment a,
         ) d
 where    a.tablespace_name = d.name
 group by a.tablespace_name, d.TEMP_TOTAL_MB;
+
+
+DROP TABLESPACE temp INCLUDING CONTENTS AND DATAFILES;

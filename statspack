@@ -1,0 +1,106 @@
+how to setup Statspack
+--Main purpose is as a reactionary too
+--Very limited data
+
+step 1...............
+
+create tablespace statspack_data
+datafile '/u01/app/oracle/oradata/orcl2/statspack_data01.dbf' size 500M
+autoextend on maxsize 2G
+extent management local uniform size 1M
+segment space management auto;
+
+
+step 2...............
+
+login as sys with sysdba priviledge
+sqlplus / as sysdba
+@spcreate.sql  <--- this creates 3 thinds PERFSTAT schema,PERFSTAT; user,tables, pakages
+
+set pages 2000
+set lines 200
+col DESCRIPTION for a90
+select * from stats$level_description; --There are lvl 0 , 5, 6, 7, 10
+
+step 3...............
+
+SQL> exec statspack.snap(i_snap_level => 6)
+
+--or you can modify like this
+SQL> exec statspack.modify_statspack_parameter(i_snap_level=>7, i_modify_parameter=>’true’);
+
+step 4...............
+SQL> BEGIN
+  2    DBMS_SCHEDULER.CREATE_SCHEDULE(
+  3     schedule_name => 'perfstat.statspack_every60',
+  4     repeat_interval => 'freq=hourly; byminute=0; bysecond=0;');
+  5
+  6    DBMS_SCHEDULER.CREATE_JOB(
+  7     job_name => 'perfstat.sp_snapshot',
+  8     job_type => 'STORED_PROCEDURE',
+  9     job_action => 'perfstat.statspack.snap',
+ 10     schedule_name => 'perfstat.statspack_every60',
+ 11     comments => 'Statspack collection');
+ 12
+ 13    DBMS_SCHEDULER.ENABLE('perfstat.sp_snapshot');
+ 14  END;
+ 15  /
+
+ .....Make sure you are here ORACLE_HOME\rdbms\admin\spreport.sql
+ --To run a report use below script
+ @spreport.sql
+ 
+ -- to get a list of snapshot
+ select SNAP_ID, SNAP_TIME from STATS$SNAPSHOT;
+ 
+ 
+ --used to create schedule snapsot collections every hour
+ @spauto.sql
+
+-- To remove a job use above query to find job number
+SELECT job, what, next_date, next_sec FROM user_jobs;
+EXECUTE DBMS_JOB.REMOVE(jobno);
+example
+EXECUTE DBMS_JOB.REMOVE(1);
+
+
+col owner for a8
+col program_name for a33
+set lines 200
+SELECT owner, job_name, enabled FROM dba_scheduler_jobs;
+
+EXECUTE DBMS_SCHEDULER.drop_job (job_name => 'PERFSTAT.SP_SNAPSHOT');
+
+SELECT job, what, next_date, next_sec FROM user_jobs;
+SELECT * FROM user_jobs_running;
+col owner for a8
+col program_name for a33
+set lines 200
+SELECT owner, program_name, enabled FROM dba_scheduler_programs;
+
+
+
+
+Uninstall Statspack
+--sysdba privilege required
+ORACLE_HOME/rdbms/admin/spdrop.sql
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

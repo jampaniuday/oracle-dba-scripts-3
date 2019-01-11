@@ -1,0 +1,63 @@
+#!/bin/bash
+#
+DEBUG=1
+report_type=$1
+
+source ~/.bash_profile
+
+
+STATSPACK_EMAIL_BODY=$/tmp/STATSPACK_mail_body.msg
+if [ $DEBUG -eq 1 ]; then export EMAIL_LIST='jondelmas@gmail.com'; fi
+if [ $DEBUG -eq 1 ]; then export AV5_DB_LIST='test01'; fi
+
+cd /tmp
+##rm -f $/tmp/STATSPACK_*.html $/tmp/STATSPACK_*.txt
+export AV5_DB_LIST='test01'
+
+for i in $AV5_DB_LIST; do
+
+sqlplus -s $ZABBIXPASS@$i <<EOF
+set lines 130
+set feedback off
+set pages 0
+
+DEFINE report_name='STATSPACK_$i';
+DEFINE begin_snap=0;
+DEFINE end_snap=0;
+
+col    begin_snap heading "Min SNAP ID"      new_value begin_snap  for 9999999999;
+col    end_snap   heading "Max SNAP ID"      new_value end_snap    for 9999999999;
+
+SELECT MIN(SNAP_ID) begin_snap FROM STATS$SNAPSHOT;
+SELECT MAX(SNAP_ID) end_snap FROM STATS$SNAPSHOT;
+
+col    report_name heading "STATSPACK file name"   new_value report_name  for A30;
+
+SELECT '&report_name' report_name FROM DUAL;
+SELECT &begin_snap begin_snap     FROM DUAL;
+SELECT &end_snap end_snap         FROM DUAL;
+
+@?/rdbms/admin/spreport.sql
+
+--undefine report_type;
+undefine report_name;
+undefine begin_snap;
+undefine end_snap;
+
+EOF
+
+done
+
+# logic below still sents email if for some reason the database has been down during the past week
+
+##filelist=`ls $/tmp/STATSPACK_*.html $/tmp/STATSPACK_*.txt 2>/dev/null|sed 's/^/-a /'|tr "\n" " "`
+
+##echo "~~~~~~~ATTENTION~~~~~~~~~~~~~" >> $STATSPACK_EMAIL_BODY
+##echo "___see STATSPACK attached report__ " >> $STATSPACK_EMAIL_BODY
+##echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" >> $STATSPACK_EMAIL_BODY
+##echo "............................." >> $STATSPACK_EMAIL_BODY
+##cat -v $STATSPACK_EMAIL_BODY | mailx -s "--STATSPACK REPORT:`hostname`-->" $filelist $EMAIL_LIST
+##
+##rm -rf $STATSPACK_EMAIL_BODY
+
+exit 0

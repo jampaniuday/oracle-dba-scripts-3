@@ -78,7 +78,8 @@ col program_name for a33
 set lines 200
 SELECT owner, program_name, enabled FROM dba_scheduler_programs;
 
-
+--How to purge by snap
+ORACLE_HOME/rdbms/admin/sppurge.sql
 
 
 Uninstall Statspack

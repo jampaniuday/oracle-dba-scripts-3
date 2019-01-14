@@ -16,7 +16,7 @@ export AV5_DB_LIST='test01'
 
 for i in $AV5_DB_LIST; do
 
-sqlplus -s $ZABBIXPASS@$i <<EOF
+sqlplus -s $PASS@$i <<EOF
 set lines 130
 set feedback off
 set pages 0

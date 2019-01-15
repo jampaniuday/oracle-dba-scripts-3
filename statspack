@@ -64,7 +64,7 @@ example
 EXECUTE DBMS_JOB.REMOVE(1);
 
 
-col owner for a8
+col owner for a16
 col program_name for a33
 set lines 200
 SELECT owner, job_name, enabled FROM dba_scheduler_jobs;

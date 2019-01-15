@@ -81,6 +81,17 @@ SELECT owner, program_name, enabled FROM dba_scheduler_programs;
 --How to purge by snap
 ORACLE_HOME/rdbms/admin/sppurge.sql
 
+set lines 200
+col DESCRIPTION for a60
+SELECT  job, next_date, next_sec, failures, broken, SUBSTR(what,1,40) DESCRIPTION FROM dba_jobs;
+
+set serveroutput on
+variable v_jobno number;
+begin
+dbms_job.submit(:v_jobno,'statspack.purge(i_num_days=>15,i_extended_purge=>TRUE);',trunc(sysdate)+1+2/24,'SYSDATE',TRUE);
+commit;
+end;
+/
 
 Uninstall Statspack
 --sysdba privilege required

@@ -53,6 +53,9 @@ SQL> BEGIN
  -- to get a list of snapshot
  select SNAP_ID, SNAP_TIME from STATS$SNAPSHOT;
  
+ --If you would like to change the default level from 5 to 6 you can do so with STATSPACK.MODIFY_STATSPACK_PARAMETER 
+ --using the i_snap_level and i_modify_parameter parameters.
+ exec statspack.modify_statspack_parameter(i_snap_level=>6, i_modify_parameter=>'true');
  
  --used to create schedule snapsot collections every hour
  @spauto.sql

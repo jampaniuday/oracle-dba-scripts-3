@@ -32,7 +32,7 @@ CREATE BIGFILE TABLESPACE mybigtbs
 
 
 
-
+drop tablespace DATA_TEST including contents and datafiles;
 
 
 

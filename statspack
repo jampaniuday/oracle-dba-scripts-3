@@ -27,7 +27,7 @@ col DESCRIPTION for a90
 select * from stats$level_description; --There are lvl 0 , 5, 6, 7, 10
 
 step 3...............
-
+SQL> exec statspack.snap;
 SQL> exec statspack.snap(i_snap_level => 6)
 
 --or you can modify like this

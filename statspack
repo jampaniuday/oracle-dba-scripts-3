@@ -4,6 +4,9 @@ how to setup Statspack
 
 step 1...............
 
+SELECT tablespace_name, bigfile FROM dba_tablespaces;
+ALTER DATABASE SET DEFAULT BIGFILE TABLESPACE;
+
 create tablespace statspack_data
 datafile '/u01/app/oracle/oradata/orcl2/statspack_data01.dbf' size 500M
 autoextend on maxsize 2G

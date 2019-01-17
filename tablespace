@@ -5,3 +5,66 @@ FROM (SELECT tablespace_name,Sum(bytes) AS bytes FROM dba_free_space GROUP BY ta
 	   (SELECT tablespace_name,SUM(bytes) AS bytes FROM dba_data_files GROUP BY tablespace_name) df
 WHERE fs.tablespace_name = df.tablespace_name
 ORDER BY 3 DESC;
+
+
+
+
+
+
+
+SELECT tablespace_name, bigfile FROM dba_tablespaces;
+
+ALTER DATABASE SET DEFAULT BIGFILE TABLESPACE;
+ALTER DATABASE SET DEFAULT SMALLFILE TABLESPACE;
+ALTER TABLESPACE mybigtbs RESIZE 100G;
+ALTER TABLESPACE mybigtbs AUTOEXTEND ON NEXT 10G;
+
+
+-- Valid statement.
+CREATE BIGFILE TABLESPACE mybigtbs 
+  DATAFILE '/u01/oracle/MYSID/mybigtbs01.dbf' SIZE 100G;
+
+-- Valid statement.
+CREATE BIGFILE TABLESPACE mybigtbs 
+  DATAFILE '/u01/oracle/MYSID/mybigtbs01.dbf' SIZE 100G
+  EXTENT MANAGEMENT LOCAL
+  SEGMENT SPACE MANAGEMENT AUTO;
+
+
+
+
+
+
+
+
+-- Create group by adding existing tablespace. 
+ALTER TABLESPACE temp TABLESPACE GROUP temp_ts_group;
+
+-- Add a new tablespace to the group.
+CREATE TEMPORARY TABLESPACE temp2
+  TEMPFILE '/u01/app/oracle/oradata/DB10G/temp201.dbf' SIZE 20M
+  TABLESPACE GROUP temp_ts_group;
+
+-- Assign group as the temporary tablespace for a user.  
+ALTER USER scott TEMPORARY TABLESPACE temp_ts_group;
+
+-- Assign group as the default temporary tablespace.  
+ALTER DATABASE DEFAULT TEMPORARY TABLESPACE temp_ts_group;
+
+-- Switch from the group to a specific tablespace.
+ALTER DATABASE DEFAULT TEMPORARY TABLESPACE temp;
+
+-- Remove the tablespace from the group.
+ALTER TABLESPACE temp TABLESPACE GROUP '';
+
+-- Check the group has gone.
+SELECT * FROM dba_tablespace_groups;
+
+ALTER SYSTEM SET SKIP_UNUSABLE_INDEXES = TRUE;
+ALTER SYSTEM SET SKIP_UNUSABLE_INDEXES = FALSE;
+
+ALTER SESSION SET SKIP_UNUSABLE_INDEXES = TRUE;
+ALTER SESSION SET SKIP_UNUSABLE_INDEXES = FALSE;
+
+
+

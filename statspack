@@ -32,14 +32,14 @@ SQL> exec statspack.modify_statspack_parameter(i_snap_level=>7, i_modify_paramet
 step 4...............
 SQL> BEGIN
   2    DBMS_SCHEDULER.CREATE_SCHEDULE(
-  3     schedule_name => 'perfstat.statspack_every60',
+  3     schedule_name => 'perfstat.statspack_every_hour',
   4     repeat_interval => 'freq=hourly; byminute=0; bysecond=0;');
   5
   6    DBMS_SCHEDULER.CREATE_JOB(
   7     job_name => 'perfstat.sp_snapshot',
   8     job_type => 'STORED_PROCEDURE',
   9     job_action => 'perfstat.statspack.snap',
- 10     schedule_name => 'perfstat.statspack_every60',
+ 10     schedule_name => 'perfstat.statspack_every_hour',
  11     comments => 'Statspack collection');
  12
  13    DBMS_SCHEDULER.ENABLE('perfstat.sp_snapshot');
@@ -51,7 +51,7 @@ SQL> BEGIN
  @spreport.sql
  
  -- to get a list of snapshot
- select SNAP_ID, SNAP_TIME from STATS$SNAPSHOT;
+ SELECT SNAP_ID,SNAP_LEVEL, SNAP_TIME FROM STATS$SNAPSHOT;
  
  --If you would like to change the default level from 5 to 6 you can do so with STATSPACK.MODIFY_STATSPACK_PARAMETER 
  --using the i_snap_level and i_modify_parameter parameters.
@@ -95,6 +95,15 @@ dbms_job.submit(:v_jobno,'statspack.purge(i_num_days=>15,i_extended_purge=>TRUE)
 commit;
 end;
 /
+
+set serveroutput on
+variable v_jobno number;
+begin
+dbms_job.submit(:v_jobno,'statspack.purge(i_num_days=>15,i_extended_purge=>TRUE);',trunc(sysdate)+1+2/24,'SYSDATE',TRUE);
+commit;
+end;
+/
+
 
 Uninstall Statspack
 --sysdba privilege required

@@ -113,7 +113,7 @@ Uninstall Statspack
 --sysdba privilege required
 ORACLE_HOME/rdbms/admin/spdrop.sql
 
-
+drop tablespace statpack_data including contents and datafiles;
 
 
 

@@ -8,7 +8,7 @@ SQL>
 set lines 200
 col name for a33
 col description for a70
-select name,version,description,detected_usages,last_usage_date fromd dba_feature_usage_statistics
+select name,version,description,detected_usages,last_usage_date from dba_feature_usage_statistics
 where name like 'Automatic Workload%' or name like 'AWR%';  
 
 NAME                          VERSION    DESCRIPTION                                                            DETECTED_USAGES LAST_USAGE_DATE

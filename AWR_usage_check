@@ -1,0 +1,29 @@
+SQL> show parameter CONTROL_MANAGEMENT_PACK_ACCESS 
+
+NAME TYPE VALUE 
+------------------------------------ ----------- ---------------
+control_management_pack_access       string    DIAGNOSTIC+TUNING
+
+SQL>
+set lines 200
+col name for a33
+col description for a70
+select name,version,description,detected_usages,last_usage_date fromd dba_feature_usage_statistics
+where name like 'Automatic Workload%' or name like 'AWR%';  
+
+NAME                          VERSION    DESCRIPTION                                                            DETECTED_USAGES LAST_USAGE_DATE
+---------------------------------------- ---------------------------------------------------------------------- --------------- --------------------
+Automatic Workload Repository 11.2.0.4.0 A manual Automatic Workload Repository (AWR) snapshot was taken in the               0
+                                          last sample period.
+AWR Baseline                  11.2.0.4.0 At least one AWR Baseline has been created by the user                               0
+AWR Baseline Template         11.2.0.4.0 At least one AWR Baseline Template has been created by the user                      0
+AWR Report                    11.2.0.4.0 At least one Workload Repository Report has been created by the user                47 JAN-20-2019 00:55:01
+SQL>
+
+
+
+
+
+
+Reference:
+http://www.dba-oracle.com/t_how_to_tell_if_awr_license.htm

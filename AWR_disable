@@ -1,0 +1,93 @@
+
+Disabling Diagnostic and Tuning Pack and AWR (10g and 11g)
+The Oracle Tuning and Diagnostics is a very useful feature.  Unfortunately, it is a separately licensed feature and its price point can be discouraging.  For Oracle version 11g, the diagnostic and tuning package and AWR are enabled by default. We can disable them and save the extra license cost by setting the init parameter CONTROL_MANAGEMENT_PACK_ACCESS to NONE and Install the Oracle package to disable the AWR snapshots.
+
+Example AWR report for TEST db on HOST01 in Oracle 11g,
+
+ SQL> @awrrpt
+ Instance DB Name Snap Id Snap Started Level
+---------------------------------------------
+ TEST TEST 3829 11 Mar 2013 08:00 1
+ 3830 11 Mar 2013 09:00 1
+ 3831 11 Mar 2013 10:00 1
+ 3832 11 Mar 2013 11:00 1
+ 3833 11 Mar 2013 12:00 1
+ 3834 11 Mar 2013 13:00 1
+ 3835 11 Mar 2013 14:00 1
+ Specify the Begin and End Snapshot Ids
+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ Enter value for begin_snap:
+1.To check the current init parameter value:
+
+ SQL> show parameter control_management_pack_access
+ NAME TYPE VALUE
+----------------------------------------------
+ control_management_pack_access string DIAGNOSTIC+TUNING
+2. Adjust the parameter to disable tuning and diagnostics.  This parameter is dynamic, so a database restart is unnecessary.
+
+ SQL> ALTER SYSTEM SET control_management_pack_access=NONE scope=both;
+ System altered.
+3. Verify the parameter value again after disable command:
+
+ SQL> show parameter control_management_pack_access
+ NAME TYPE VALUE
+----------------------------------------------
+ control_management_pack_access string NONE
+4. Install the package to disable AWR snapshots by downloading the package from MOS 1909073.1 and installing it as SYSDBA, then executing it as SYS from SQL*Plus:
+
+SQL> @dbmsnoawr.plb
+ Package created.
+ Package body created.
+ 
+SQL> begin dbms_awr.disable_awr();
+ 2 end;
+ 3 /
+ PL/SQL procedure successfully completed.
+5. Verify AWR again after disabling
+
+(This check was done after 15:00 and the last snapshot is still 14:00, so AWR snapshots will not be taken anymore in DB level.)
+
+ SQL> @awrrpt
+ 3834 11 Mar 2013 13:00 1
+ 3835 11 Mar 2013 14:00 1
+ 
+Specify the Begin and End Snapshot Ids
+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+6. Optional – Execute ~/rdbms/admin/catnoawr.sql to remove all the AWR repository objects to free up space in the default tablespace where the AWR objects were located.
+
+Controlling Diagnostic and Tuning Pack Usage and Disabling AWR for Oracle 10g
+
+1. There is no need to change any init parameter. Just perform the process under step 4 above
+from SQL*Plus to disable AWR:
+
+SQL> @dbmsnoawr.plb
+ Package created.
+ Package body created.
+ 
+SQL> begin dbms_awr.disable_awr();
+ 2 end;
+ 3 /
+ PL/SQL procedure successfully completed.
+2. Verify AWR again after disabled
+
+(This check was done after 15:00 and the last snapshot is still 14:00, so AWR snapshots will not be taken anymore in DB level.)
+
+ SQL> @awrrpt
+ 3834 11 Mar 2013 13:00 1
+ 3835 11 Mar 2013 14:00 1
+ 
+Specify the Begin and End Snapshot Ids
+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+3. Optional – Execute ~/rdbms/admin/catnoawr.sql to remove all the AWR repository objects to free up space in SYSAUX
+
+
+
+
+
+
+
+
+
+
+Reference:
+https://dbajonblog.wordpress.com/2015/03/09/disabling-diagnostic-and-tuning-pack-and-awr-10g-and-11g/

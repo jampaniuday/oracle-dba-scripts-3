@@ -1,0 +1,566 @@
+
+DBMS_JOB by Example
+===========================
+JOB Related Tables
+===========================
+DBA_JOBS/ALL_JOBS/USER_JOBS - Existing Jobs
+DBA_JOBS_RUNNING - Currently running or "stuck" jobs.
+
+===========================
+DBMS_JOB package
+===========================
+
+DBMS_JOB is used to create/change/execute jobs.
+
+As from Oracle 10G DBMS_JOB package was superseded by the DBMS_SCHEDULER package.
+
+
+commit - You must issue a commit after each DBMS_JOB.XXX procedure.
+
+
+===========================
+Create a new job
+===========================
+DECLARE
+   v_job_number NUMBER(10);
+BEGIN
+ DBMS_JOB.SUBMIT (JOB => v_job_number, 
+                  WHAT => 'MY_PACKAGE.my_proc;', 
+                  NEXT_DATE => TRUNC(SYSDATE + 1)+1.5/24+30/1440, 
+                  INTERVAL => 'TRUNC(SYSDATE + 1)+1.5/24+30/1440'
+ );
+ COMMIT;
+END;
+/
+
+A more "full" version:
+DECLARE
+   v_job_number NUMBER(10);
+   v_instance_number NUMBER(10);
+BEGIN
+   -- Optional - for RAC only   -- Get the instance number for use with DBMS_JOB.SUBMIT
+   SELECT instance_number 
+   INTO v_instance_number
+   FROM v$instance;
+
+   -- Submit a job to begin tonight at midnight, and execute
+   --  every half-hour thereafter
+ DBMS_JOB.SUBMIT (JOB => v_job_number, 
+                  WHAT => 'MANAGER.daily_checks;', 
+                  NEXT_DATE => TRUNC(SYSDATE + 1)+3/24+30/1440, 
+                  INTERVAL => 'TRUNC(SYSDATE + 1)+3/24+30/1440', 
+                  NO_PARSE => TRUE, 
+                  INSTANCE => v_instance_number,
+                  FORCE => NULL
+ );
+ COMMIT;
+ DBMS_OUTPUT.PUT_LINE('The job number is: '||v_job_number);
+
+END;
+/
+
+
+===========================
+Recreate existing job, keeping job ID
+===========================
+DBMS_JOB.ISUBMIT - allows to create job with a specific number.
+BEGIN
+  DBMS_JOB.REMOVE(1521);
+COMMIT;
+END;
+/
+
+BEGIN
+  DBMS_JOB.ISUBMIT
+    ( job       => 1521 
+     ,what      => 'MY_PACKAGE.MY_PROC;'
+     ,next_date => TRUNC(SYSDATE)+8/24+45/1440
+     ,interval  => 'TRUNC(SYSDATE+1) +8/24+45/1440'
+    );
+  COMMIT;
+END;
+/
+
+===========================
+Update existing job
+===========================
+DBMS_JOB.CHANGE - To change existing job
+Example: Update existing job to run Daily at 01:00.
+
+DECLARE
+  v_job_id     NUMBER;
+  v_what       VARCHAR2(4000);
+BEGIN
+  SELECT job, what
+    INTO v_job_id, v_what
+    FROM USER_JOBS
+   WHERE UPPER(WHAT) LIKE '%MY_PACKAGE.MY_PROC%';
+
+  DBMS_JOB.CHANGE(v_job_id, 
+                    v_what, 
+                    TRUNC(SYSDATE+1)+1/24, 
+                   'TRUNC(SYSDATE+1)+1/24');
+  COMMIT;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('ERROR: ' || SQLERRM);
+
+END;
+
+Change job schedule by example:
+
+- Run once a week, at 1:00 AM
+NEXT_DATE => TRUNC(SYSDATE+7)+(1/24)
+INTERVAL => 'TRUNC(SYSDATE+7)+(1/24)',
+
+- Run Every month, on the first Monday
+ DBMS_JOB.SUBMIT
+    (JOB => v_job_number, 
+    WHAT => 'Purge_Subscriber(365);', 
+    NEXT_DATE =>NEXT_DAY(TRUNC(ADD_MONTHS(TRUNC(SYSDATE),1),'MON')+(3/24),'MONDAY'), 
+    INTERVAL =>'NEXT_DAY(TRUNC(ADD_MONTHS(TRUNC(SYSDATE),1),''MON'')+(3/24),''MONDAY'')',
+    NO_PARSE => TRUE, 
+    INSTANCE => v_instance_number,
+    FORCE => NULL
+ );
+
+===========================
+Execute existing job
+===========================
+
+Option 1. Run existing job immediately.
+
+BEGIN  
+  DBMS_JOB.run(221);
+  COMMIT;
+END;
+/
+
+Where 221 is the job_id.
+
+Option 2. Run existing job with scheduler
+BEGIN
+   DBMS_JOB.NEXT_DATE(221,SYSDATE + 2/1440);
+   COMMIT;
+END;
+
+============================
+How to make sure the job has started to run
+============================
+A. When job has started to run, the fields THIS_DATE and THIS_SEC are updated, and are no longer NULL.
+B. Query DBA_JOBS_RUNNING.
+
+============================
+Delete existing job
+============================
+BEGIN
+  DBMS_JOB.remove(221);
+  COMMIT;
+END;
+/
+
+============================
+Suspend job from running
+============================
+Set the NEXT_DATE to some distant date in the future.
+
+BEGIN
+  DBMS_JOB.NEXT_DATE(331,TO_DATE('40000101','YYYYMMDD'));
+  COMMIT;
+END;
+/
+
+============================
+Parameters:
+============================
+JOB - Is a unique key. Populated from Sequence owned by SYS
+WHAT - Is the code that would be executed
+NEXT_DATE - The date that this job will next be executed.
+INTERVAL -  Would become NEXT_DATE after the first execution.
+Upon execution, Oracle would set the
+NEXT_DATE value, by the value taken from INTERVAL, using following SQL:
+SELECT INTERVAL INTO NEXT_DATE FROM DUAL;
+THIS_DATE and THIS_SEC - the DATETIME and TIME when the job started to run.
+INSTANCE - The default is zero - All Instances.
+FORCE - is related to a situation when INSTANCE is not zero.
+
+
+
+============================
+To kill a running job
+============================
+
+A. View Valid Running Jobs:
+SELECT * FROM DBA_JOBS_RUNNING;
+
+B. View Zombie Running Jobs:
+All the zombie jobs have still active session, but the job is not running.
+
+SELECT 'kill -9 '||PROCESSES.spid AS LINUX_KILL,
+       'ALTER SYSTEM KILL SESSION 
+       'ALTER SYSTEM KILL SESSION '||''''||SESSIONS.sid||','||SESSIONS.serial#||''''||' IMMEDIATE;' AS KILL_SESSION,  
+       PROCESSES.spid,
+       PROCESSES.username AS osuser,
+       PROCESSES.program,
+       SESSIONS.sid,
+       SESSIONS.serial#,
+       SESSIONS.username,
+       SESSIONS.sql_id,
+       SESSIONS.logon_time,
+       SESSIONS.event,
+       RUNNING_JOBS.job
+     --PROCESSES.*,
+     --SESSIONS.*,
+     --RUNNING_JOBS.*
+ FROM V$PROCESS PROCESSES, 
+      V$SESSION SESSIONS,
+      DBA_JOBS_RUNNING RUNNING_JOBS
+  WHERE PROCESSES.program like '%J0%'
+    AND PROCESSES.addr=SESSIONS.paddr
+    AND SESSIONS.sid = RUNNING_JOBS.sid(+)
+    AND SESSIONS.schemaname <> 'SYS'
+    AND SESSIONS.type = 'USER'
+    AND RUNNING_JOBS.job IS NULL
+ORDER BY SESSIONS.SQL_ID;
+
+
+
+
+
+
+C. View Zombie Running Jobs:
+Kill Long Running Jobs SQL
+
+SELECT 'ALTER SYSTEM KILL SESSION ' || SUBSTR(''''||V_SESSION.sid||','||V_SESSION.serial#||'''', 1,15)||' IMMEDIATE;' AS ORACLE_KILL,
+       'kill -9 '||V_PROCESS.spid AS LINUX_KILL,
+       V_SESSION.machine AS "SERVER",
+       V_SESSION.osuser AS OS_USER,
+       V_SESSION.status,     
+       V_SESSION.program,
+       V_SESSION.sid,
+       V_SESSION.serial#,
+       V_PROCESS.spid,
+       V_SESSION.username,       
+       DBA_JOBS.schema_user,
+       DBA_JOBS.job,
+       DBA_JOBS.what,
+       TO_CHAR(V_SESSION.logon_time,'YYYYMMDD hh24:mi:ss') AS logon_time
+FROM   V$SESSION V_SESSION,
+       V$PROCESS V_PROCESS,
+       DBA_JOBS_RUNNING STUCK_JOBS,
+       DBA_JOBS     
+WHERE  V_PROCESS.addr = V_SESSION.paddr 
+  AND  V_SESSION.type != 'BACKGROUND'
+  AND  V_SESSION.sid = STUCK_JOBS.sid
+  AND  DBA_JOBS.job = STUCK_JOBS.job(+)
+  AND  logon_time < (SYSDATE - 45/1440)
+
+  AND  UPPER(DBA_JOBS.what) IN ('EXT_MOCO.SCHEDULE;','EXT_OVMD.SCHEDULE;','EXT_IPN.SCHEDULE;','EXT_GLR.SCHEDULE;','EXT_SPARX.SCHEDULE;')
+
+
+D. SQL to kill long running job session
+SELECT ''''||DBA_JOBS_RUNNING.SID||','||V_SESSIONS.serial#||''''  AS SID_SERIAL,
+       V_PROCESS.SPID AS PROCESS_ID,
+       DBA_JOBS_RUNNING.JOB,
+       DBA_JOBS.what what,
+       DBA_JOBS_RUNNING.THIS_DATE,
+       DBA_JOBS_RUNNING.THIS_SEC,
+       DBA_JOBS.FAILURES
+  FROM DBA_JOBS_RUNNING,
+       DBA_JOBS,
+       V$SESSION V_SESSIONS,
+       V$PROCESS V_PROCESS
+WHERE DBA_JOBS_RUNNING.job = DBA_JOBS.job (+)
+ AND  DBA_JOBS_RUNNING.sid = V_SESSIONS.sid  (+)
+ AND V_SESSIONS.paddr = V_PROCESS.addr
+
+
+SQL to get OS pid  of a session
+SELECT p.spid, s.osuser, s.program 
+  FROM v$process p, 
+       v$session s 
+ WHERE p.addr=s.paddr
+
+D. Kill Oracle process on host.
+
+Take the SPID from the SQL above. For example, 2343.
+Logon to the Oracle host server.
+
+Option A.
+Using Linux kill command
+ps -ef | grep <p.spid>
+kill -9 <p.spid>
+
+Option B.
+Using Oracle orakill utility
+orakill instance_name spid
+
+
+for example:
+orakill orcl 2343
+
+
+
+
+
+
+Optionally - Check broken field: Y/N
+
+Set job broken field to Y.
+Oracle does not submit broken jobs.
+However if you set broken to 'Y' wile the job is still running, Oracle would update broken status to 'N' when the jobs completes.
+
+DBMS_JOB.BROKEN ( 
+   job       IN  BINARY_INTEGER,
+   broken    IN  BOOLEAN,
+   [next_date IN  DATE]);
+COMMIT;
+
+For example:
+DBMS_JOB.BROKEN(1521,FALSE,SYSDATE+1/1440);
+COMMIT;
+
+===========================
+Change job interval
+===========================
+BEGIN 
+  DBMS_JOB.INTERVAL(7,'TRUNC(SYSDATE+1) + 22 / 24');
+  COMMIT;
+END;
+/
+
+
+===========================
+Fix a Broken job
+===========================
+When a job finishes to run, Oracle set the job's status to normal after the job completes. 
+The way to "fix"a broken job, is to:
+
+Option A. - Run the job via DBMS_JOB.run
+For example:
+BEGIN
+  DBMS_JOB.run(152);
+  commit;
+END;
+/
+
+Option B. - Set job Broken indicator to false, and schedule the job to run within next minutes, via DBMS_JOB.broken
+
+DBMS_JOB.BROKEN(JOB=>&job_no,  broken=>FALSE, NEXT_DATE=>SYSDATE + &when_plus_sysdate);
+
+For example:
+BEGIN 
+  DBMS_JOB.BROKEN(152, FALSE, SYSDATE + 2/1440);
+  commit;
+END;
+/
+
+More detailed example:
+BEGIN 
+  DBMS_JOB.BROKEN(JOB => 152, 
+                  BROKEN => FALSE, 
+                  NEXT_DATE => TO_DATE('20141209 210000','YYYYMMDD hh24miss')
+                 );
+  commit;
+END;
+/
+
+===========================
+Troubleshooting
+===========================
+What to check if job is not running.
+
+1. Check latest trc file under <user_dump_dest>
+SELECT value from V$PARAMETER WHERE name = 'core_dump_dest'
+
+2. Check alert.log
+
+3. Check if number of running processes exceed value set for JOB_QUEUE_PROCESSES.
+If the number of current job processes reached JOB_QUEUE_PROCESSES value, new job processes would not start.
+
+If option #3 is the cause it might be tricky to spot:
+- Scheduled job is not starting to execute. 
+- No error in alert log.
+
+SELECT name, value 
+FROM V$PARAMETER 
+WHERE name LIKE '%job%';
+
+SELECT COUNT(*) 
+FROM V$PROCESS PROCESSES 
+WHERE PROCESSES.program LIKE '%(J0%)' --<J Zero>
+
+4. NEXTDATE is set to 01/01/4000
+Whenever job BROKEN changes to 'Y', job NEXT_DATE is set by Oracle to 01/01/4000, to prevent the job from running.
+
+
+5. Job next_date might be set to run in the past
+ORA-12012,ORA-12005
+Following errors are are thrown into Oracle alert log every few minutes:
+
+Errors in file /oracle/admin/orainst/diag/rdbms/myserver/orainst/trace/orainst_j000_24773144.trc:
+ORA-12012: error on auto execute of job 6
+
+ORA-12005: may not schedule automatic refresh for times in the past
+Errors in file 
+/oracle/admin/orainst/diag/rdbms/myserver/orainst/trace/orainst_j000_56164698.trc:
+ORA-12012: error on auto execute of job 7
+ORA-12005: may not schedule automatic refresh for times in the past
+
+Looking into USER_JOBS, jobs 6 and 7 have following value in INTERVAL:
+TRUNC(SYSDATE) + 22 / 24
+
+This value is wrong.
+It should be:
+TRUNC(SYSDATE+1) + 22 / 24
+
+
+
+===========================
+Find and Kill long running Jobs
+===========================
+SQL A.
+Find an kill zombie processes of a long finished Job
+
+SELECT 'kill -9 '||PROCESSES.spid AS LINUX_KILL, 
+        PROCESSES.spid, PROCESSES.program, 
+        SESSIONS.username, SESSIONS.sql_id, SESSIONS.logon_time, SESSIONS.event 
+  FROM  v$process PROCESSES, V$SESSION SESSIONS 
+ WHERE  PROCESSES.program like '%J0%' 
+   AND  PROCESSES.addr=SESSIONS.paddr 
+   AND  SESSIONS.schemaname <> 'SYS' 
+   AND  SESSIONS.type = 'USER' 
+   AND  PROCESSES.background IS NULL 
+   AND  SESSIONS.sid NOT IN (SELECT sid FROM DBA_JOBS_RUNNING)
+
+   AND  logon_time < SYSDATE-1/4
+
+SQL B.
+SELECT 
+       'ALTER SYSTEM KILL SESSION '||SUBSTR(''''||SESSIONS.sid||','||SESSIONS.serial#||'''',1,15)||' IMMEDIATE;' AS "Kill Session",
+       'kill -9 '||PROCESSES.spid AS "Linux kill",
+       JOBS_RUNNING.job, 
+       JOBS_RUNNING.failures, 
+       DBA_JOBS.what, 
+       JOBS_RUNNING.this_date, 
+       SYSDATE,
+       ROUND((SYSDATE - JOBS_RUNNING.this_date) * 24 * 60) 
+  FROM DBA_JOBS_RUNNING JOBS_RUNNING,
+       DBA_JOBS,
+       V$SESSION SESSIONS,
+       V$PROCESS PROCESSES  
+ WHERE JOBS_RUNNING.job = DBA_JOBS.job 
+   AND JOBS_RUNNING.sid = SESSIONS.sid 
+   AND SESSIONS.paddr = PROCESSES.addr 
+   AND ((DBA_JOBS.what IN 
+         ('job1;', 'job2;', 'job3;', 'ext_tre.Schedule;')
+   AND (SYSDATE - JOBS_RUNNING.this_date) * 24 * 60 > 30) 
+
+
+
+
+
+
+===========================
+Find and Kill session
+===========================
+SELECT  'ALTER SYSTEM KILL SESSION '||SUBSTR(''''||s.sid||','||s.serial#||'''',1,15)||' IMMEDIATE;' AS "Kill Session",
+       'kill -9 '||p.spid AS "Linux kill",
+        p.spid, s.osuser, s.program
+  FROM v$process p, 
+       v$session s 
+ WHERE p.addr=s.paddr
+===========================
+Configuring DBMS_JOB with JOB_QUEUE_PROCESSES
+===========================
+JOB_QUEUE_PROCESSES initialization parameter specifies the maximum number of processes that can be created for the execution of jobs.
+In Oracle 11G, default value for JOB_QUEUE_PROCESSES is 1000
+Setting JOB_QUEUE_PROCESSES to 0 disables DBMS_JOB jobs.
+
+To change setting:
+ALTER SYSTEM SET JOB_QUEUE_PROCESSES=20 SCOPE=BOTH
+The effect is immediate, no need to restart Oracle Instance.
+
+When using Oracle Scheduler, there is an additional parameter that controls maximum of Jobs that are running under Oracle Scheduler. 
+This parameter is called MAX_JOB_SLAVE_PROCESSES 
+
+
+Configuring DBMS_JOB Reference
+
+
+===========================
+Interval for a job
+===========================
+Run job every 15 minutes
+BEGIN 
+  DBMS_JOB.NEXT_DATE(7,TRUNC(SYSDATE,'HH24') + ( ( 15 + ( 15 * FLOOR(TO_NUMBER(TO_CHAR(SYSDATE,'MI')) / 15))) / 1440)
+  DBMS_JOB.INTERVAL(7,'TRUNC(SYSDATE,''HH24'') + ( ( 15 + ( 15 * FLOOR(TO_NUMBER(TO_CHAR(SYSDATE,''MI'')) / 15))) / 1440)
+');
+  COMMIT;
+END;
+/
+
+Run job every 6 hours
+BEGIN 
+  DBMS_JOB.INTERVAL(7,'TRUNC(SYSDATE,''HH24'') + 6/24');
+  COMMIT;
+END;
+
+/
+
+interval => 'TRUNC(SYSDATE,''hh24'')+0/24/60') 
+===========================
+Run DBMS_JOB for another user
+===========================
+
+When attempting to run a job that belongs to another user, even as privileged user, one would get this error message:
+ORA-23421: job number 123 is not a job in the job queue
+
+To overcome this, need to use DBMS_SYS_SQL Package.
+DBMS_SYS_SQL Package allows user A to run SQL statements as user B.
+
+DBMS_SYS_SQL is owned by SYS, and first must be granted.
+sqlplus / as sysdba
+GRANT EXECUTE ON SYS.DBMS_SYS_SQL TO admin_user;
+
+Now, log as admin_user, and use DBMS_SYS_SQL, in a PL/SQL block.
+
+In this example, all jobs of a certain type are executed under all users.
+
+DECLARE
+ v_uid     NUMBER;
+ v_result  INTEGER;
+
+ v_sql_template VARCHAR2(1000) := 'BEGIN DBMS_JOB.BROKEN(my_job_id, FALSE, SYSDATE+1/1440); COMMIT; END;  ';
+
+ v_sqltext      VARCHAR2(1000);
+ v_myint   INTEGER;
+
+ CURSOR broken_jobs_cur IS SELECT schema_user, job FROM DBA_JOBS WHERE what = 'SUPPORT_UTIL_PKG.SUPPORT_COUNTERS_PRC;' AND broken = 'Y';
+
+ BEGIN
+
+   FOR broken_jobs_rec IN broken_jobs_cur loop
+
+     SELECT user_id INTO v_uid FROM ALL_USERS WHERE username = broken_jobs_rec.schema_user;     
+
+     v_sqltext := REPLACE (v_sql_template,'my_job_id',broken_jobs_rec.job);
+     
+     v_myint := SYS.DBMS_SYS_SQL.OPEN_CURSOR();
+
+     SYS.DBMS_SYS_SQL.PARSE_AS_USER(v_myint, v_sqltext, DBMS_SQL.NATIVE, v_uid);
+
+     v_result := SYS.DBMS_SYS_SQL.EXECUTE(v_myint);
+
+     SYS.DBMS_SYS_SQL.CLOSE_CURSOR(v_myint);     
+
+     COMMIT;
+  END LOOP;   
+ END ;
+
+/
+
+
+Reference:
+http://aleckaplandba.blogspot.com/2014/01/dbmsjob-usage-by-example.html

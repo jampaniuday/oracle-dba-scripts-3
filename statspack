@@ -115,7 +115,8 @@ ORACLE_HOME/rdbms/admin/spdrop.sql
 
 drop tablespace statpack_data including contents and datafiles;
 
-
+Reference:
+https://oracle-base.com/articles/8i/statspack-8i
 
 
 

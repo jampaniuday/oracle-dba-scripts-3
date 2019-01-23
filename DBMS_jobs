@@ -531,28 +531,20 @@ In this example, all jobs of a certain type are executed under all users.
 DECLARE
  v_uid     NUMBER;
  v_result  INTEGER;
-
  v_sql_template VARCHAR2(1000) := 'BEGIN DBMS_JOB.BROKEN(my_job_id, FALSE, SYSDATE+1/1440); COMMIT; END;  ';
-
  v_sqltext      VARCHAR2(1000);
  v_myint   INTEGER;
 
  CURSOR broken_jobs_cur IS SELECT schema_user, job FROM DBA_JOBS WHERE what = 'SUPPORT_UTIL_PKG.SUPPORT_COUNTERS_PRC;' AND broken = 'Y';
 
  BEGIN
-
    FOR broken_jobs_rec IN broken_jobs_cur loop
 
      SELECT user_id INTO v_uid FROM ALL_USERS WHERE username = broken_jobs_rec.schema_user;     
-
      v_sqltext := REPLACE (v_sql_template,'my_job_id',broken_jobs_rec.job);
-     
      v_myint := SYS.DBMS_SYS_SQL.OPEN_CURSOR();
-
      SYS.DBMS_SYS_SQL.PARSE_AS_USER(v_myint, v_sqltext, DBMS_SQL.NATIVE, v_uid);
-
      v_result := SYS.DBMS_SYS_SQL.EXECUTE(v_myint);
-
      SYS.DBMS_SYS_SQL.CLOSE_CURSOR(v_myint);     
 
      COMMIT;

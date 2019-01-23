@@ -82,8 +82,11 @@ Specify the Begin and End Snapshot Ids
 
 
 
-
-
+--To end AWR snapshot colection
+begin 
+DBMS_WORKLOAD_REPOSITORY.MODIFY_SNAPSHOT_SETTINGS(11520,0); 
+end;
+/
 
 
 
@@ -91,3 +94,4 @@ Specify the Begin and End Snapshot Ids
 
 Reference:
 https://dbajonblog.wordpress.com/2015/03/09/disabling-diagnostic-and-tuning-pack-and-awr-10g-and-11g/
+http://www.dba-oracle.com/t_awr_remove_disable.htm

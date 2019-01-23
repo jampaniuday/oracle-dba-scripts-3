@@ -402,4 +402,12 @@ database opened
 Dont' forget to create a temp tablespace also.
 CREATE TEMPORARY TABLESPACE ts_temp TEMPFILE '/data/temp01.dbf' SIZE 500M autoextend on extent management local UNIFORM SIZE 1m;
 
+Reference:
 http://www.oracledistilled.com/oracle-database/restore-database-to-another-host-using-rman/
+https://docs.oracle.com/cd/B14117_01/server.101/b10734/rcmcnctg.htm
+
+
+
+
+
+

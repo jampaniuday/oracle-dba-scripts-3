@@ -25,7 +25,10 @@ report obsolete;
 RMAN>delete obsolete;
 
 
-
+--connect to recovery catalog
+export ORACLE_SID=ORCL
+./rman target / catalog rman/rcat@<catalog database>
+resync catalog;
 
 
 -POINT IN TIME RECOVERY

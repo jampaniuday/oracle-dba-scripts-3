@@ -1,8 +1,6 @@
 	
 SELECT 'Name is ' || last_name FROM employees;
 
-
-
 --example:
 Name is Feeney
 Name is OConnell
@@ -15,29 +13,12 @@ Name is Baer
 Name is Higgins
 Name is Gietz
 
-
 SELECT CONCAT(CONCAT(last_name, '''s job category is '),job_id) "Job" 
 FROM employees 
 WHERE employee_id = 152;
 Job
 ------------------------------------------------------
 Hall's job category is SA_REP
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 CREATE TABLE employees

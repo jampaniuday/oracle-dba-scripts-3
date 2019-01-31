@@ -1,0 +1,4 @@
+expdp system/password@db10g full=Y directory=TEST_DIR dumpfile=DB10G.dmp logfile=expdpDB10G.log
+impdp system/password@db10g  directory=TEST_DIR dumpfile=DB10G.dmp logfile=impdpDB10G.log CONTENT=METADATA_ONLY
+
+impdp system/password@db10g directory=TEST_DIR dumpfile=DB10G.dmp logfile=impdpDB10G.log TABLE_EXISTS_ACTION=APPEND

@@ -6,3 +6,10 @@ set long 99999
 spool Database_tbs.sql
 select ''||dbms_metadata.get_ddl('TABLESPACE',tb.tablespace_name)||';' from dba_tablespaces tb where TABLESPACE_NAME not like '%SYS%' and TABLESPACE_NAME not in ('DBSNMP','DIP','OUTLN','XDB','XS$NULL');
 spool off
+
+
+show parameter db_block_size
+
+alter system set db_16k_cache_size=50M scope=both;
+
+ALTER DATABASE SET DEFAULT BIGFILE TABLESPACE;

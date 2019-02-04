@@ -1,0 +1,295 @@
+Multitenant : Transparent Data Encryption (TDE) in Pluggable Databases (PDBs) in Oracle Database 12c Release 1 (12.1)
+Oracle database 12c introduced a new way to manage keystores, encryption keys and secrets using the ADMINISTER KEY MANAGEMENT command. 
+This replaces the ALTER SYSTEM SET ENCRYPTION KEY and ALTER SYSTEM SET ENCRYPTION WALLET commands for key and wallet administration from previous releases. The terminology in the documentation freely mixes the terms wallet and keystore, but the intention seems to be to move to the term keystore, in line with the Java terminology.
+
+The multitenant architecture complicates key management somewhat, as the root container needs an open keystore with an active master encryption key. The CDBs keystore is used to store encryption keys for all the associated PDBs, but they each need their own master encryption key. The master encryption key for the PDB must be exported before an unplug operation, so it can be imported after a subsequent plugin operation.
+
+This article describes some of the basic key management operations as they relate to Transparent Data Encryption (TDE). It does not describe all the possible key management operations, which are shown here.
+
+Keystore Location
+Create a Keystore
+Use the Keystore for TDE
+Unplug/Plugin PDBs with TDE
+Auto-Login Keystores
+SYSKM
+Related articles.
+
+Multitenant : All Articles
+Transparent Data Encryption (TDE) in Oracle 10g Database Release 2
+Tablespace Encryption in Oracle 11g Database Release 1
+Keystore Location
+A keystore must be created to hold the encryption key. The search order for finding the keystore is as follows.
+
+If present, the location specified by the ENCRYPTION_WALLET_LOCATION parameter in the "sqlnet.ora" file.
+If present, the location specified by the WALLET_LOCATION parameter in the "sqlnet.ora" file.
+The default location for the keystore. If the $ORACLE_BASE is set, this is "$ORACLE_BASE/admin/DB_UNIQUE_NAME/wallet", otherwise it is "$ORACLE_HOME/admin/DB_UNIQUE_NAME/wallet", where DB_UNIQUE_NAME comes from the initialization parameter file.
+Keystores should not be shared between CDBs, so if multiple CDBs are run from the same ORACLE_HOME you must do one of the following to keep them separate.
+
+Use the default keystore location, so each CDB database has its own keystore.
+Specify the location using the $ORACLE_SID.
+ENCRYPTION_WALLET_LOCATION =
+  (SOURCE =(METHOD = FILE)(METHOD_DATA =
+    (DIRECTORY = /u01/app/oracle/admin/$ORACLE_SID/encryption_keystore/)))
+Have a separate "sqlnet.ora" for each database, making sure the TNS_ADMIN variable is set correctly.
+Regardless of where you place the keystore, make sure you don't lose it. Oracle 12c is extremely sensitive to loss of the keystore. During the writing of this article I was forced to revert to a clean snapshot several times.
+
+Create a Keystore
+Edit the "$ORACLE_HOME/network/admin/sqlnet.ora" files, adding the following entry.
+
+ENCRYPTION_WALLET_LOCATION =
+  (SOURCE =(METHOD = FILE)(METHOD_DATA =
+    (DIRECTORY = /u01/app/oracle/admin/$ORACLE_SID/encryption_keystore/)))
+Create the directory to hold the keystore.
+
+mkdir -p /u01/app/oracle/admin/$ORACLE_SID/encryption_keystore
+Connect to the root container and create the keystore.
+
+CONN / AS SYSDBA
+
+ADMINISTER KEY MANAGEMENT CREATE KEYSTORE '/u01/app/oracle/admin/cdb1/encryption_keystore/' IDENTIFIED BY myPassword;
+
+HOST ls /u01/app/oracle/admin/cdb1/encryption_keystore/
+ewallet.p12
+
+SQL>
+You can open and close the keystore from the root container using the following commands. If the CONTAINER=ALL clause is omitted, the current container is assumed. Open the keystore for all containers.
+
+-- Open
+ADMINISTER KEY MANAGEMENT SET KEYSTORE OPEN IDENTIFIED BY myPassword CONTAINER=ALL;
+
+-- Close
+ADMINISTER KEY MANAGEMENT SET KEYSTORE CLOSE IDENTIFIED BY myPassword CONTAINER=ALL;
+You need to create and activate a master key in the root container and one in each of the pluggable databases. Using the CONTAINER=ALL clause does it in a single step. If the CONTAINER=ALL clause is omitted, it will only be done in the current container and will need to be done again for each PDB individually. Information about the master key is displayed using the V$ENCRYPTION_KEYS view.
+
+ADMINISTER KEY MANAGEMENT SET KEY IDENTIFIED BY myPassword WITH BACKUP CONTAINER=ALL;
+
+SET LINESIZE 100
+SELECT con_id, key_id FROM v$encryption_keys;
+
+    CON_ID KEY_ID
+---------- ------------------------------------------------------------------------------
+         0 AdaYAOior0/3v0AoZDBV8hoAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+         0 AYmKkQxl+U+Xv3UHVMgSJC8AAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+SQL>
+Information about the keystore is displayed using the V$ENCRYPTION_WALLET view.
+
+SET LINESIZE 200
+COLUMN wrl_parameter FORMAT A50
+SELECT * FROM v$encryption_wallet;
+
+WRL_TYPE             WRL_PARAMETER                                      STATUS                         WALLET_TYPE          WALLET_OR FULLY_BAC     CON_ID
+-------------------- -------------------------------------------------- ------------------------------ -------------------- --------- --------- ----------
+FILE                 /u01/app/oracle/admin/cdb1/encryption_keystore/    OPEN                           PASSWORD             SINGLE    NO                 0
+
+SQL>
+Connect to the PDB. If you didn't create the key in the previous step, create a new master key for the PDB.
+
+CONN sys@pdb1 AS SYSDBA
+
+-- We don't need to create a master key as we did it previously by using CONTAINER=ALL
+-- ADMINISTER KEY MANAGEMENT SET KEYSTORE OPEN IDENTIFIED BY myPassword;
+-- ADMINISTER KEY MANAGEMENT SET KEY IDENTIFIED BY myPassword WITH BACKUP;
+
+SELECT con_id, key_id FROM v$encryption_keys;
+
+    CON_ID KEY_ID
+---------- ------------------------------------------------------------------------------
+         0 ATbrc0RkAE//v/jcxOecSGIAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+SQL>
+Use the Keystore for TDE
+You should now be able to create a table with an encrypted column in the PDB.
+
+CONN test/test@pdb1
+
+-- Encrypted column
+CREATE TABLE tde_test (
+  id    NUMBER(10),
+  data  VARCHAR2(50) ENCRYPT
+);
+
+INSERT INTO tde_test VALUES (1, 'This is a secret!');
+COMMIT;
+We can also create encrypted tablespaces.
+
+-- Encrypted tablespacew
+CONN sys@pdb1 AS SYSDBA
+
+CREATE TABLESPACE encrypted_ts
+DATAFILE SIZE 128K
+AUTOEXTEND ON NEXT 64K
+ENCRYPTION USING 'AES256'
+DEFAULT STORAGE(ENCRYPT);
+
+ALTER USER test QUOTA UNLIMITED ON encrypted_ts;
+
+CONN test/test@pdb1
+
+CREATE TABLE tde_ts_test (
+  id    NUMBER(10),
+  data  VARCHAR2(50)
+) TABLESPACE encrypted_ts;
+
+INSERT INTO tde_ts_test VALUES (1, 'This is also a secret!');
+COMMIT;
+If the PDB is restarted, the keystore must be opened in the PDB before the data can be accessed.
+
+CONN sys@pdb1 AS SYSDBA
+
+SHUTDOWN IMMEDIATE;
+STARTUP;
+ADMINISTER KEY MANAGEMENT SET KEYSTORE OPEN IDENTIFIED BY myPassword;
+
+CONN test/test@pdb1
+
+SELECT * FROM tde_test;
+
+        ID DATA
+---------- --------------------------------------------------
+         1 This is a secret!
+
+SQL>
+
+SELECT * FROM tde_ts_test;
+
+        ID DATA
+---------- --------------------------------------------------
+         1 This is also a secret!
+
+SQL>
+If the CDB is restarted, the keystore must be opened in both the CDB and the PDBs.
+
+CONN / AS SYSDBA
+
+SHUTDOWN IMMEDIATE;
+STARTUP;
+ADMINISTER KEY MANAGEMENT SET KEYSTORE OPEN IDENTIFIED BY myPassword CONTAINER=ALL;
+
+CONN test/test@pdb1
+
+SELECT * FROM tde_test;
+
+        ID DATA
+---------- --------------------------------------------------
+         1 This is a secret!
+
+SQL>
+
+SELECT * FROM tde_ts_test;
+
+        ID DATA
+---------- --------------------------------------------------
+         1 This is also a secret!
+
+SQL>
+Unplug/Plugin PDBs with TDE
+This section describes the process of unplugging PDB1 from the CDB1 instance and plugging into the CDB2 instance on the same machine with a new name of PDB2.
+
+Switch to the CDB1 instance.
+
+ORAENV_ASK=NO
+export ORACLE_SID=cdb1
+. oraenv
+ORAENV_ASK=YES
+sqlplus /nolog
+Export the key information from PDB1.
+
+CONN sys@pdb1 AS SYSDBA
+
+ADMINISTER KEY MANAGEMENT EXPORT ENCRYPTION KEYS WITH SECRET "mySecret" TO '/tmp/export.p12' IDENTIFIED BY myPassword;
+Unplug PDB1 from CDB1.
+
+CONN / AS SYSDBA
+
+ALTER PLUGGABLE DATABASE pdb1 CLOSE;
+ALTER PLUGGABLE DATABASE pdb1 UNPLUG INTO '/tmp/pdb1.xml';
+Switch to the CDB2 instance.
+
+ORAENV_ASK=NO
+export ORACLE_SID=cdb2
+. oraenv
+ORAENV_ASK=YES
+sqlplus /nolog
+Plug in the PDB1, with the new name of PDB2 into the CDB2 instance.
+
+CONN / AS SYSDBA
+
+CREATE PLUGGABLE DATABASE pdb2 USING '/tmp/pdb1.xml';
+
+-- If you are not using OMF, you will have to convert the paths manually.
+--CREATE PLUGGABLE DATABASE pdb2 USING '/tmp/pdb1.xml'
+--  FILE_NAME_CONVERT=('/u01/app/oracle/oradata/cdb1/pdb1/','/u01/app/oracle/oradata/cdb2/pdb2/');
+
+ALTER PLUGGABLE DATABASE pdb2 OPEN READ WRITE;
+Opening PDB2 will result in the following error, which we can ignore that this point.
+
+Warning: PDB altered with errors.
+If CDB2 doesn't already have a keystore at the root level, you will need to create it.
+
+CONN / AS SYSDBA
+HOST mkdir -p /u01/app/oracle/admin/cdb2/encryption_keystore/
+ADMINISTER KEY MANAGEMENT CREATE KEYSTORE '/u01/app/oracle/admin/cdb2/encryption_keystore/' IDENTIFIED BY myPassword;
+ADMINISTER KEY MANAGEMENT SET KEYSTORE OPEN IDENTIFIED BY myPassword;
+Import the key information into PDB2 and restart it. Until it opens cleanly it will not register with the listener, so switch the container manually.
+
+CONN / AS SYSDBA
+ALTER SESSION SET CONTAINER=pdb2;
+
+ADMINISTER KEY MANAGEMENT SET KEYSTORE OPEN IDENTIFIED BY "myPassword";
+ADMINISTER KEY MANAGEMENT IMPORT ENCRYPTION KEYS WITH SECRET "mySecret" FROM '/tmp/export.p12' IDENTIFIED BY "myPassword" WITH BACKUP;
+
+-- Restart the PDB and open the keystore.
+SHUTDOWN;
+STARTUP;
+ADMINISTER KEY MANAGEMENT SET KEYSTORE OPEN IDENTIFIED BY "myPassword";
+The encrypted data is now available as expected.
+
+CONN test/test@pdb2
+
+SELECT * FROM tde_test;
+
+        ID DATA
+---------- --------------------------------------------------
+         1 This is a secret!
+
+SQL>
+
+SELECT * FROM tde_ts_test;
+
+        ID DATA
+---------- --------------------------------------------------
+         1 This is also a secret!
+
+SQL>
+Auto-Login Keystores
+Creation of an auto-login keystore means you no longer need to explicitly open the keystore after a restart. The first reference to a key causes the keystore to be opened automatically, as shown below.
+
+CONN / AS SYSDBA
+ADMINISTER KEY MANAGEMENT CREATE LOCAL AUTO_LOGIN KEYSTORE FROM KEYSTORE '/u01/app/oracle/admin/cdb1/encryption_keystore/' IDENTIFIED BY myPassword;
+
+SHUTDOWN IMMEDIATE;
+STARTUP
+
+CONN test/test@pdb1
+
+SELECT * FROM tde_test;
+
+        ID DATA
+---------- --------------------------------------------------
+         1 This is a secret!
+
+SQL>
+
+SELECT * FROM tde_ts_test;
+
+        ID DATA
+---------- --------------------------------------------------
+         1 This is also a secret!
+
+SQL>
+
+Reference:
+https://oracle-base.com/articles/12c/multitenant-transparent-data-encryption-tde-12cr1
+
+

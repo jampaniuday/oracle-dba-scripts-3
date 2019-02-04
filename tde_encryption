@@ -137,3 +137,8 @@ sys@db11g> select * from test.ets_test;
 1 row selected.
 
 SQL>
+
+
+Reference:
+https://oracle-base.com/articles/11g/tablespace-encryption-11gr1
+

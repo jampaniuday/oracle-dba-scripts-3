@@ -24,6 +24,34 @@ report obsolete;
 # To delete backups that have become obsolete based on the retention policy.
 RMAN>delete obsolete;
 
+RMAN> BACKUP DATABASE;
+RMAN> BACKUP ARCHIVELOG ALL;
+RMAN> BACKUP DATABASE PLUS ARCHIVELOG;
+RMAN> BACKUP CURRENT CONTROLFILE;
+RMAN> BACKUP SPFILE;
+
+
+--NO ARCHIVELOG MODE
+RMAN> SHUTDOWN IMMEDIATE;
+RMAN> STARTUP MOUNT;
+RMAN> BACKUP DATABASE;
+
+
+
+
+RUN
+{
+  ALLOCATE CHANNEL ch11 TYPE DISK MAXPIECESIZE 10G;
+  BACKUP
+  FORMAT '/u03/app/oracle/TEST/%d_D_%T_%u_s%s_p%p'
+  DATABASE
+  PLUS ARCHIVELOG
+  FORMAT '/u03/app/oracle/TEST/%d_A_%T_%u_s%s_p%p';
+  RELEASE CHANNEL ch11;
+}
+
+
+
 
 --connect to recovery catalog
 export ORACLE_SID=ORCL

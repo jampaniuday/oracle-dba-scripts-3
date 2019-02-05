@@ -6,16 +6,20 @@ The Transparent Data Encryption (TDE) feature was introduced in Oracle 10g Datab
   -- Database Startup
 
 
-Data Encryption - DBMS_OBFUSCATION_TOOLKIT
-Database Security Enhancements in Oracle Database 10g - DBMS_CRYPTO
-SecureFiles in Oracle 11g Database Release 1 - LOB Encryption
+
 Wallet Creation
-The environment setup for tablespace encryption is the same as that for transparent data encryption. Before attempting to create an encrypted tablespace, a wallet must be created to hold the encryption key. The search order for finding the wallet is as follows:
+The environment setup for tablespace encryption is the same as that for transparent data encryption. 
+Before attempting to create an encrypted tablespace, a wallet must be created to hold the encryption key. 
+The search order for finding the wallet is as follows:
 
 If present, the location specified by the ENCRYPTION_WALLET_LOCATION parameter in the sqlnet.ora file.
 If present, the location specified by the WALLET_LOCATION parameter in the sqlnet.ora file.
-The default location for the wallet. If the $ORACLE_BASE is set, this is "$ORACLE_BASE/admin/DB_UNIQUE_NAME/wallet", otherwise it is "$ORACLE_HOME/admin/DB_UNIQUE_NAME/wallet", where DB_UNIQUE_NAME comes from the initialization parameter file.
-Although encrypted tablespaces can share the default database wallet, Oracle recommend you use a separate wallet for transparent data encryption functionality by specifying the ENCRYPTION_WALLET_LOCATION parameter in the sqlnet.ora file. To accomplish this we add the following entry into the sqlnet.ora file on the server and make sure the specified directory has been created.
+The default location for the wallet. If the $ORACLE_BASE is set, this is "$ORACLE_BASE/admin/DB_UNIQUE_NAME/wallet", 
+otherwise it is "$ORACLE_HOME/admin/DB_UNIQUE_NAME/wallet", where DB_UNIQUE_NAME comes from the initialization parameter file.
+Although encrypted tablespaces can share the default database wallet, Oracle recommend you use a separate wallet 
+for transparent data encryption functionality by specifying the ENCRYPTION_WALLET_LOCATION parameter in the sqlnet.ora 
+file. To accomplish this we add the following entry into the sqlnet.ora file on the server and make sure the specified 
+directory has been created.
 
 ENCRYPTION_WALLET_LOCATION=
   (SOURCE=(METHOD=FILE)(METHOD_DATA=
@@ -32,7 +36,11 @@ ALTER SYSTEM SET ENCRYPTION WALLET OPEN IDENTIFIED BY "myPassword";
 
 ALTER SYSTEM SET ENCRYPTION WALLET CLOSE;
 Tablespace Creation
-Encrypted tablespaces are created by specifying the ENCRYPTION clause with an optional USING clause to specify the encryption algorithm. If the USING clause is omitted, the encryption algorithm defaults to 'AES128'. In addition, the default storage clause of ENCRYPT must be specified. Tablespace encryption does not allow the NO SALT option that is available in TDE. The following statement creates an encrypted tablespace by explicitly naming the 'AES256' encryption algorithm in the USING clause.
+Encrypted tablespaces are created by specifying the ENCRYPTION clause with an optional USING clause to specify 
+the encryption algorithm. If the USING clause is omitted, the encryption algorithm defaults to 'AES128'. 
+In addition, the default storage clause of ENCRYPT must be specified. Tablespace encryption does 
+not allow the NO SALT option that is available in TDE. The following statement creates an encrypted 
+tablespace by explicitly naming the 'AES256' encryption algorithm in the USING clause.
 
 CREATE TABLESPACE encrypted_ts
 DATAFILE '/u01/app/oracle/oradata/DB11G/encrypted_ts01.dbf' SIZE 128K

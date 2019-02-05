@@ -64,6 +64,13 @@ ENCRYPTED_TS                   YES
 
 6 rows selected.
 
+set lines 160
+col WRL_TYPE for a6
+col WRL_PARAMETER for a60
+col STATUS for a8
+col CON_ID for 999
+select * from V$ENCRYPTION_WALLET;
+
 SQL>
 Regular tablespaces cannot be converted to encrypted tablespaces. Instead, data must be transferred manually using export/import, "ALTER TABLE ... MOVE ..." or "CREATE TABLE ... AS SELECT * FROM ...".
 

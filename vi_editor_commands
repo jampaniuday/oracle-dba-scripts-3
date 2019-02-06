@@ -1,3 +1,11 @@
+:set number
+:1,30s/^/#  <-- to make comments
+:1,3s/^#/   <-- to uncomment lines
+:set nonumber
+
+
+
+
 1. Insert mode (Where you can just type like normal text editor. Press i for insert mode)
 2. Command mode (Where you give commands to the editor to get things done . Press ESC for command mode)
 Most of them below are in command mode

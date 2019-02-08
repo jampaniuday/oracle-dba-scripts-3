@@ -28,6 +28,8 @@ This parameter can also be used to identify a Hardware Security Model (HSM) as t
 
 The following command creates and opens the wallet.
 
+#1 ALTER SYSTEM SET ENCRYPTION KEY IDENTIFIED BY "welcome1";
+#2 orapki wallet create -wallet /u01/app/oracle/admin/$ORACLE_UNQNAME/wallet -auto_login -pwd welcome1
 
 orapki wallet create -wallet /u01/app/oracle/admin/$ORACLE_UNQNAME/wallet -auto_login -pwd welcome1
 

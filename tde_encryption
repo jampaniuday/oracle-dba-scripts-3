@@ -28,6 +28,10 @@ This parameter can also be used to identify a Hardware Security Model (HSM) as t
 
 The following command creates and opens the wallet.
 
+
+orapki wallet create -wallet /u01/app/oracle/admin/$ORACLE_UNQNAME/wallet -auto_login -pwd welcome1
+
+
 CONN sys/password@db11g AS SYSDBA
 ALTER SYSTEM SET ENCRYPTION KEY IDENTIFIED BY "myPassword";
 Wallets must be reopened after an instance restart and can be closed to prevent access to encrypted data.

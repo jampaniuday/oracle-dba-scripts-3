@@ -1,3 +1,5 @@
+
+SELECT * FROM dba_blockers;
 select * from v$lock where block=1;
 
 SELECT s.inst_id, s.sid, s.serial#, p.spid, s.username, s.program

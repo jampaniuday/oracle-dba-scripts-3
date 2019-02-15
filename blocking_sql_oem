@@ -2,6 +2,15 @@
 SELECT * FROM dba_blockers;
 select * from v$lock where block=1;
 
+SELECT s.sid, s.serial#, s.username, s.osuser, p.spid, s.machine, p.terminal, s.program
+FROM v$session s, v$process p
+WHERE s.paddr = p.addr;
+
+find spid
+
+
+
+
 SELECT s.inst_id, s.sid, s.serial#, p.spid, s.username, s.program
 FROM gv$session s 
 JOIN

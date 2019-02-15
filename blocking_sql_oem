@@ -1,0 +1,56 @@
+select * from v$lock where block=1;
+
+SELECT s.inst_id, s.sid, s.serial#, p.spid, s.username, s.program
+FROM gv$session s 
+JOIN
+gv$process p ON p.addr = s.paddr AND p.inst_id = s.inst_id
+WHERE s.type != 'BACKGROUND';
+
+SELECT s.inst_id, s.sid, s.serial#, s.username, s.program
+FROM gv$session s ;
+
+ALTER SYSTEM KILL SESSION 'SID, SERIAL#' IMMEDIATE;
+ ALTER SYSTEM KILL SESSION '41, 48385' IMMEDIATE;
+ 
+ 
+SELECT /*+ RULE */ D.JOB, V.SID, V.SERIAL#, LOG_USER USERNAME, WHAT,
+DECODE(TRUNC(SYSDATE - LOGON_TIME), 0, NULL,
+TRUNC(SYSDATE - LOGON_TIME) || ' Days' || ' + ') ||
+TO_CHAR(TO_DATE(TRUNC(MOD(SYSDATE-LOGON_TIME,1) * 86400), 'SSSSS'), 'HH24:MI:SS') RUNNING,
+D.FAILURES, 'alter system kill session ' || '''' || V.SID || ', ' || V.SERIAL# || '''' || ' immediate;' KILL_SQL
+FROM DBA_JOBS_RUNNING D, V$SESSION V, DBA_JOBS J
+WHERE V.SID = D.SID
+AND D.JOB = J.JOB;
+
+
+--find Runaway OEM jobs
+set lines 200
+col JOB_NAME for a40
+col JOB_OWNER for a12
+col JOB_TYPE for a20
+select JOB_NAME,JOB_OWNER,JOB_TYPE,JOB_ID,START_TIME,STATUS from sysman.MGMT$JOB_EXECUTION_HISTORY where job_name like '%DATAGUARDCREATESTANDBY449%';
+ select job_id,job_name,job_type,job_status from sysman.mgmt_job where job_name like '%DATAGUARDCREATESTANDBY449%';
+ 
+ exec immediate mgmt_job_engine.stop_all_executions_with_id('81CC4DE1202242BBE05326F8150AD355',TRUE);
+ commit;
+ 
+-- script to stop runaway OEM job may or may not work
+DECLARE
+jguid RAW(16);
+BEGIN
+SELECT job_id
+INTO jguid
+FROM mgmt_job
+WHERE job_name = 'DATAGUARDCREATESTANDBY449'
+AND job_owner = 'ORACLEDBA'
+;
+mgmt_job_engine.stop_all_executions_with_id(jguid,TRUE);
+COMMIT;
+END;
+/
+
+-- script to stop runaway OEM job may or may not work
+exec mgmt_job_engine.stop_all_executions_with_id('81CC4DE1202242BBE05326F8150AD355',TRUE);
+exec mgmt_job_engine.delete_all_executions('DATAGUARDCREATESTANDBY449','ORACLEDBA');
+
+ 

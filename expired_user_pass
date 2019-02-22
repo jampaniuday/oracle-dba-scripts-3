@@ -6,7 +6,7 @@ SYSTEM                         OPEN
 TESTUSER                       EXPIRED(GRACE)
 ANONYMOUS                      LOCKED
 OUTLN                          EXPIRED & LOCKED
-
+--You cannot change an account status from EXPIRE(GRACE) to OPEN without resetting the password.
 
 ALTER USER xyz_user ACCOUNT UNLOCK;-- 
 
@@ -35,8 +35,12 @@ ALTER USER "WILIAM" IDENTIFIED BY VALUES 'S:6680C1468F5F3B36B726CE7620F
 FD9657F0E0E49AE56AAACE847BA368CEB;120F24A4C2554B4F';
   
   
+  --depending on the version of ORACLE
+select spare4 from sys.user$ where name='[user name]';
+select password from dba_users where username = '[user name]';
   
-  
+  Then use this to reset it:
+  alter user [user name] identified by values '[result from above query]';
   
   
   

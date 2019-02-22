@@ -1,0 +1,24 @@
+
+ALTER USER xyz_user ACCOUNT UNLOCK;
+
+
+select profile from DBA_USERS where username = '<username>';
+
+
+alter profile <profile_name> limit password_life_time UNLIMITED;
+alter profile DEFAULT limit password_life_time UNLIMITED;
+
+
+select resource_name,limit from dba_profiles where profile='<profile_name>';
+select resource_name,limit from dba_profiles where profile='DEFAULT';
+
+
+
+SELECT
+  ACCOUNT_STATUS,
+  TO_CHAR(LOCK_DATE, 'YYYY-MM-DD HH24:MI:SS') AS LOCK_DATE,
+  TO_CHAR(EXPIRY_DATE, 'YYYY-MM-DD HH24:MI:SS') AS EXPIRY_DATE
+FROM
+  DBA_USERS
+WHERE
+  USERNAME = '&USER_NAME';

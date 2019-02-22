@@ -1,24 +1,49 @@
+SELECT username, account_status FROM dba_users;
+USERNAME                       ACCOUNT_STATUS
+------------------------------ --------------------------------
+SYS                            OPEN
+SYSTEM                         OPEN
+TESTUSER                       EXPIRED(GRACE)
+ANONYMOUS                      LOCKED
+OUTLN                          EXPIRED & LOCKED
 
-ALTER USER xyz_user ACCOUNT UNLOCK;
 
+ALTER USER xyz_user ACCOUNT UNLOCK;-- 
 
 select profile from DBA_USERS where username = '<username>';
-
 
 alter profile <profile_name> limit password_life_time UNLIMITED;
 alter profile DEFAULT limit password_life_time UNLIMITED;
 
-
 select resource_name,limit from dba_profiles where profile='<profile_name>';
 select resource_name,limit from dba_profiles where profile='DEFAULT';
 
-
-
-SELECT
-  ACCOUNT_STATUS,
+SELECT ACCOUNT_STATUS,
   TO_CHAR(LOCK_DATE, 'YYYY-MM-DD HH24:MI:SS') AS LOCK_DATE,
   TO_CHAR(EXPIRY_DATE, 'YYYY-MM-DD HH24:MI:SS') AS EXPIRY_DATE
-FROM
-  DBA_USERS
-WHERE
-  USERNAME = '&USER_NAME';
+FROM  DBA_USERS
+WHERE USERNAME = '&USER_NAME';
+  
+select DBMS_METADATA.GET_DDL('USER','WILIAM') from dual;
+
+set long 9999999
+set lin 400
+select DBMS_METADATA.GET_DDL('USER','YOUR_USER_NAME') from dual;
+
+
+ALTER USER "WILIAM" IDENTIFIED BY VALUES 'S:6680C1468F5F3B36B726CE7620F
+FD9657F0E0E49AE56AAACE847BA368CEB;120F24A4C2554B4F';
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  

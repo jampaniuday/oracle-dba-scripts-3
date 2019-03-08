@@ -132,7 +132,29 @@ set lines 200
 select * from v$flash_recovery_area_usage;
 
 
+DGMGRL> show configuration verbose;
+    prod  - Primary database
+    stby  - Physical standby database
+      Warning: ORA-16826: apply service state is inconsistent with the DelayMins property     <<<<<<<<<<<<<<<
+Fast-Start Failover: DISABLED
 
+Configuration Status:
+WARNING
+
+Workaround :
+Check on Which node MRP process is running.
+
+On Standby
+Make sure  Standby redo logs files are created on standby.
+Please refere < Doc ID 249703.1> for the same.
+
+DGMGRL> edit database <standby database> set state=apply-off;
+DGMGRL> edit database <standby database> set state=apply-on;
+
+or
+
+SQL>alter database recover managed standby database cancel;
+SQL> alter database recover managed standby database using current logfile disconnect;
 
 
 

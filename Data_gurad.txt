@@ -130,7 +130,7 @@ ALTER SYSTEM SET log_archive_dest_state_2 = DEFER;
 
 set lines 200
 select * from v$flash_recovery_area_usage;
-
+select round((SPACE_USED/SPACE_LIMIT)*100) from V$RECOVERY_FILE_DEST;<<<<<<--------------------------
 
 DGMGRL> show configuration verbose;
     prod  - Primary database

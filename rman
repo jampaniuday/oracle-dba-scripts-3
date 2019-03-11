@@ -23,6 +23,9 @@ list expired backup;
 report obsolete;
 # To delete backups that have become obsolete based on the retention policy.
 RMAN>delete obsolete;
+DELETE OBSOLETE RECOVERY WINDOW OF 15 DAYS;
+
+
 
 RMAN> BACKUP DATABASE;
 RMAN> BACKUP ARCHIVELOG ALL;

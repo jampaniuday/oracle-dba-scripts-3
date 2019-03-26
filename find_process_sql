@@ -1,0 +1,51 @@
+--find out what a process is doing in oracle
+##first find PID from top command
+ PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND
+31431 oracle    20   0 10.9g 489m  19m S 161.6  0.1  57035:15 java
+--69593 oracle    20   0 64.2g  61m  57m R 99.6  0.0 541:38.02 oracle
+69585 oracle    20   0 64.2g  61m  57m R 99.3  0.0 541:21.05 oracle
+69589 oracle    20   0 64.2g  61m  57m R 99.3  0.0 541:03.60 oracle
+69580 oracle    20   0 64.2g  61m  57m R 98.9  0.0 541:27.77 oracle
+
+
+
+SET LINES 300
+SET PAGES 999
+COL OSUSER FOR A6
+COL DBUSER FOR A5
+COL SID FOR 9999
+COL MACHINE FOR A20
+COL MODULE FOR A10
+SELECT OSUSER,USERNAME DBUSER,SID,SERIAL#,SQL_ID,STATUS,MACHINE,
+       PORT,PROGRAM,LAST_CALL_ET ACTIVE_TIME_SEC 
+FROM   V$SESSION WHERE PADDR=(SELECT ADDR FROM V$PROCESS WHERE SPID=&PID);
+
+Enter value for pid: 50845
+old   3: FROM V$SESSION WHERE paddr=(SELECT addr FROM V$PROCESS WHERE SPID=&PID)
+new   3: FROM V$SESSION WHERE paddr=(SELECT addr FROM V$PROCESS WHERE SPID=50845)
+
+OSUSER DBUSE   SID    SERIAL# SQL_ID        STATUS   MACHINE                    PORT PROGRAM                                          ACTIVE_TIME_SEC
+------ ----- ----- ---------- ------------- -------- -------------------- ---------- ------------------------------------------------ ---------------
+oracle DBARE   268      64555 4m2jdf6s924a6 ACTIVE   ATXP-AV5-ORA02            29392 oracle@ATXP-AV5-ORA02 (P007)                                  13
+       PO
+
+--now take SQL_ID and bring it to the new query
+
+SET LONG 200000000
+SET LINES 300
+SET PAGES 999
+COL PARSING_SCHEMA_NAME FOR A20 
+COL SQL_FULLTEXT FOR A60
+SELECT PARSING_SCHEMA_NAME,SQL_FULLTEXT FROM V$SQL WHERE SQL_ID='&SQL_ID';
+
+Enter value for sql_id: f1pbykq4q25ms
+old   1: SELECT PARSING_SCHEMA_NAME,SQL_FULLTEXT FROM V$SQL WHERE SQL_ID='&SQL_ID'
+new   1: SELECT PARSING_SCHEMA_NAME,SQL_FULLTEXT FROM V$SQL WHERE SQL_ID='4m2jdf6s924a6'
+
+SYS                  select 1 from (select * from "RD41805Z1"."MLOG$_VAULTITEM" a
+                     s of snapshot (:1)                 where xid$$ not in (selec
+                     t xid from sys.snap_xcmt$))  where rownum = 1
+
+SYS                  select 1 from (select * from "RD41805Z1"."MLOG$_VAULTITEM" a
+                     s of snapshot (:1)                 where xid$$ not in (selec
+                     t xid from sys.snap_xcmt$))  where rownum = 1

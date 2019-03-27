@@ -45,6 +45,12 @@ where    a.tablespace_name = d.name
 group by a.tablespace_name, d.TEMP_TOTAL_MB;
 
 
+create temporary tablespace temp;
+
 --DROP TABLESPACE temp INCLUDING CONTENTS AND DATAFILES;
 
 alter tablespace temp shrink tempfile '/u02/app/oracle/oradata/datastore/datafile/o1_mf_temp_f0n1scd6_.tmp' keep 458m;
+
+ALTER DATABASE DEFAULT TEMPORARY TABLESPACE TEMP_NEW;
+
+alter tablespace temp add tempfile 'c:\oracle\oradata\temp3\temp02.dbf' size 50m reuse autoextend on next 1m maxsize 500m;

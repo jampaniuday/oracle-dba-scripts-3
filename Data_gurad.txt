@@ -66,7 +66,7 @@ SELECT PROCESS, CLIENT_PROCESS,THREAD#, SEQUENCE#,STATUS FROM V$MANAGED_STANDBY;
 -- redo data (at the current point in time) could be lost if the primary database crashed
 SELECT * FROM V$DATAGUARD_STATS;
 
---On standby This view provides the current redo apply rate in KB/second:
+--ORACLE 10g only----On standby This view provides the current redo apply rate in KB/second:
 select to_char(snapshot_time,'dd-mon-rr hh24:mi:ss') snapshot_time, thread#, sequence#, applied_scn,
 apply_rate from V$standby_apply_snapshot;
 

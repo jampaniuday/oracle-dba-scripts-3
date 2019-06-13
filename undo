@@ -40,7 +40,7 @@ ALTER DATABASE DATAFILE '<undotbs_file_name>' RESIZE <new_undotbs_size>M ;
 
 
 
-
+.
 
 
 

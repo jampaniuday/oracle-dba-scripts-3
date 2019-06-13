@@ -1,0 +1,37 @@
+The following query calculates the number of bytes needed:
+
+SQL> SELECT (UR * (UPS * DBS)) + (DBS * 24) AS "Bytes" 
+FROM (SELECT value AS UR FROM v$parameter WHERE name = 'undo_retention'), 
+(SELECT (SUM(undoblks)/SUM(((end_time - begin_time)*86400))) AS UPS FROM v$undostat), 
+(select block_size as DBS from dba_tablespaces where tablespace_name= 
+(select value from v$parameter where name = 'undo_tablespace'));
+
+
+
+
+
+
+
+
+SELECT file_name, tablespace_name, bytes/1024/1024 UNDO_SIZE_MB, SUM
+(bytes/1024/1024) OVER() TOTAL_UNDO_SIZE_MB
+      FROM dba_data_files d
+      WHERE EXISTS (SELECT 1 FROM v$parameter p WHERE LOWER
+(p.name)='undo_tablespace' AND p.value=d.tablespace_name);
+
+
+ALTER DATABASE DATAFILE '<undotbs_file_name>' RESIZE <new_undotbs_size>M ;
+
+
+
+
+
+
+
+
+
+
+
+
+
+

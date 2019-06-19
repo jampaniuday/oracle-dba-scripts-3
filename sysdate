@@ -1,0 +1,24 @@
+Oracle – Select sysdate +/- time from dual
+
+Sysdate:
+SELECT TO_CHAR(SYSDATE, 'dd-mm-yy hh24:mi:ss') from dual;
+
+Days:
+SELECT TO_CHAR(SYSDATE -1, 'dd-mm-yy hh24:mi:ss') from dual;
+
+Hours:
+SELECT TO_CHAR(SYSDATE-(1/24), 'dd-mm-yy hh24:mi:ss') from dual;
+
+Minutes:
+SELECT TO_CHAR(SYSDATE-1/(24*60), 'dd-mm-yy hh24:mi:ss') from dual;
+
+Seconds:
+SELECT TO_CHAR(SYSDATE-1/(24*60*60), 'dd-mm-yy hh24:mi:ss') from dual;
+
+Likewise you can replace the – with a + to get the sysdate plus time i.e:
+SELECT TO_CHAR(SYSDATE +1, 'dd-mm-yy hh24:mi:ss') from dual;
+
+
+find 15 minutes ago
+select sysdate-15/(24*60) from dual;
+select systimestamp-1/90 from dual;

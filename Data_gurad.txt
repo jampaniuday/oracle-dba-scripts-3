@@ -48,11 +48,8 @@ SELECT distinct SEQUENCE# "Last Sequence Generated", THREAD# "Thread" FROM V$ARC
 WHERE (THREAD#,FIRST_TIME ) IN (SELECT THREAD#,MAX(FIRST_TIME) FROM V$ARCHIVED_LOG GROUP BY THREAD#) ORDER BY 1;
 
 --Standby check if insycn with production
-SELECT ARCH.THREAD# "Thread", ARCH.SEQUENCE# "Last Sequence Received", APPL.SEQUENCE# "Last Sequence Applied", 
-(ARCH.SEQUENCE# - APPL.SEQUENCE#) "Difference" FROM (SELECT THREAD# ,SEQUENCE# FROM V$ARCHIVED_LOG WHERE 
-(THREAD#,FIRST_TIME ) IN (SELECT THREAD#,MAX(FIRST_TIME) FROM V$ARCHIVED_LOG GROUP BY THREAD#)) ARCH, 
-(SELECT THREAD# ,SEQUENCE# FROM V$LOG_HISTORY WHERE (THREAD#,FIRST_TIME ) IN (SELECT THREAD#,MAX(FIRST_TIME) 
-FROM V$LOG_HISTORY GROUP BY THREAD#)) APPL WHERE ARCH.THREAD# = APPL.THREAD#;
+
+
 
 
 --Fast start failover status
@@ -114,6 +111,7 @@ set lines 260 pages 150
 col FACILITY for a22
 col MESSAGE for a110
 select * from v$dataguard_status;
+SELECT * FROM V_$DATAGUARD_STATUS;
 
 --on Logical Standby to determin lag
 select name, value, unit from v$dataguard_status;

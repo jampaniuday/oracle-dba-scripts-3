@@ -2,6 +2,42 @@ select a.SID, a.SERIAL#, c.OBJECT_NAME
 from v$session a, v$locked_object b, user_objects c
 where a.SID=b.SESSION_ID and b.OBJECT_ID=c.OBJECT_ID;
 
+--RMAN status check
+SELECT SID, SERIAL#, CONTEXT, SOFAR, TOTALWORK,ROUND (SOFAR/TOTALWORK*100, 2) "% COMPLETE"
+FROM V$SESSION_LONGOPS
+WHERE OPNAME LIKE 'RMAN%' AND OPNAME NOT LIKE '%aggregate%'
+AND TOTALWORK! = 0 AND SOFAR <> TOTALWORK;
+
+
+
 select inst_id,sid,serial# from gv$session where username='SCOTT';
 
 ALTER SYSTEM KILL SESSION 'sid,serial#';
+
+ALTER SYSTEM KILL SESSION '484,11811';  
+ALTER SYSTEM KILL SESSION ' 329,21367';  
+ALTER SYSTEM KILL SESSION '  17,25211';  
+ALTER SYSTEM KILL SESSION ' 490,61605';  
+ALTER SYSTEM KILL SESSION ' 183, 4497';  
+ALTER SYSTEM KILL SESSION '  14,15431'; 
+
+
+
+ALTER SYSTEM KILL SESSION ' 484      11811
+ALTER SYSTEM KILL SESSION ' 329      21367
+ALTER SYSTEM KILL SESSION '  17      25211
+ALTER SYSTEM KILL SESSION ' 490      61605
+ALTER SYSTEM KILL SESSION ' 183       4497
+ALTER SYSTEM KILL SESSION '  14      15431
+
+       SID    SERIAL#    CONTEXT      SOFAR  TOTALWORK % COMPLETE
+---------- ---------- ---------- ---------- ---------- ----------
+       484      11811          1    4417022    5177600      85.31
+       329      21367          1    4258558    5568000      76.48
+        17      25211          1    4537982    8019200      56.59
+       490      61605          1    5335534    9936880      53.69
+       183       4497          1    4777534    5952000      80.27
+        14      15431          1    4487870    5153536      87.08
+
+
+

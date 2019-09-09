@@ -1,0 +1,7 @@
+user@database>
+begin
+for v_id in (select id from schema.table1) loop
+     execute immediate     'alter table schema.table2 add partition table2_id_'||v_id.id||' values('||v_id.id||')';
+end loop;
+end;
+/

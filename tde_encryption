@@ -160,6 +160,23 @@ sys@db11g> select * from test.ets_test;
 SQL>
 
 
+col WRL_TYPE for a6
+col WRL_PARAMETER for a80
+col STATUS for a10
+set hea ON
+set pages 100
+select * from V$ENCRYPTION_WALLET;
+
+
+SELECT tablespace_name, encrypted, status FROM dba_tablespaces;
+
+
+SET LINESIZE 100
+COLUMN owner FORMAT A15
+COLUMN tble_name FORMAT A15
+COLUMN column_name FORMAT A15
+SELECT * FROM dba_encrypted_columns;
+
 Reference:
 https://oracle-base.com/articles/11g/tablespace-encryption-11gr1
 

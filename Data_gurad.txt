@@ -166,5 +166,10 @@ SQL> alter database recover managed standby database using current logfile disco
 
 SQL>select message from v$dataguard_status;
 
+SQL>SQL> select process, thread#, sequence#, status from v$managed_standby where process='MRP0';
+
+PROCESS      THREAD#  SEQUENCE# STATUS
+--------- ---------- ---------- ------------
+MRP0               1        173 WAIT_FOR_GAP
 
 

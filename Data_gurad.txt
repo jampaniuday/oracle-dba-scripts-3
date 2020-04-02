@@ -164,7 +164,7 @@ or
 SQL>alter database recover managed standby database cancel;
 SQL> alter database recover managed standby database using current logfile disconnect;
 
-
+SQL>select message from v$dataguard_status;
 
 
 

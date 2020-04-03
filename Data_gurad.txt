@@ -158,6 +158,8 @@ Please refere < Doc ID 249703.1> for the same.
 
 DGMGRL> edit database <standby database> set state=apply-off;
 DGMGRL> edit database <standby database> set state=apply-on;
+DGMGRL> show database <standby database> InconsistentProperties;
+
 
 or
 

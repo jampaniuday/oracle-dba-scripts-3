@@ -172,4 +172,11 @@ PROCESS      THREAD#  SEQUENCE# STATUS
 --------- ---------- ---------- ------------
 MRP0               1        173 WAIT_FOR_GAP
 
+SELECT NAME, VALUE FROM V$DATAGUARD_STATS;
+
+NAME                      VALUE
+----------------------- ---------------
+transport lag             +00 00:00:00
+apply lag                 +00 00:02:50
+estimated startup time    19
 

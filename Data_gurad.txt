@@ -3,7 +3,9 @@ set lines 200
 select process, status, sequence# from v$managed_standby;
 
 --Start SQL appy Physical database
-Alter database recover managed standby database disconnect;
+ALTER DATABASE RECOVER MANAGED STANDBY DATABASE;                         -- start in foreground
+ALTER DATABASE RECOVER MANAGED STANDBY DATABASE DISCONNECT FROM SESSION; -- start in backgorund
+
 -----------------------------------------------------------Start realtime SQL appy for logical standby;
 ------------------------------------------------------------Alter database start logical standby apply immediate;
 --Stop SQL apply
